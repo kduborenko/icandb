@@ -14,7 +14,9 @@ public class FindOperation extends StorageOperation {
     @Override
     public Object execute(JSONObject arg) {
         String collection = arg.getString("$collection");
-        List<JSONObject> result = getStorage().find(collection, arg.getJSONObject("$query"));
+        List<JSONObject> result = getStorage().find(collection,
+                arg.getJSONObject("$query"),
+                arg.optJSONObject("$fields"));
         return new JSONArray(result);
     }
 }

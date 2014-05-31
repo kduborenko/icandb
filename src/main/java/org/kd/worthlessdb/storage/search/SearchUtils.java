@@ -1,6 +1,9 @@
-package org.kd.worthlessdb.operations.search;
+package org.kd.worthlessdb.storage.search;
 
 import org.json.JSONObject;
+import org.kd.worthlessdb.storage.filter.AllFieldsSelector;
+import org.kd.worthlessdb.storage.filter.FieldsSelector;
+import org.kd.worthlessdb.storage.filter.OneFieldSelector;
 
 import java.util.*;
 
@@ -38,4 +41,24 @@ public final class SearchUtils {
         return value == null || PRIMITIVE_TYPES.contains(value.getClass());
     }
 
+    @SuppressWarnings("unchecked")
+    public static FieldsSelector buildFieldsSelector(JSONObject fieldsSelector) {
+        if (fieldsSelector == null || fieldsSelector.keySet().isEmpty()) {
+            return AllFieldsSelector.INSTANCE;
+        }
+        List<FieldsSelector> operatorList = new ArrayList<>();
+        for (String key : (Set<String>) fieldsSelector.keySet()) {
+            Object value = fieldsSelector.get(key);
+            if (Integer.valueOf(1).equals(value)) {
+                operatorList.add(new OneFieldSelector(key));
+            } else {
+                throw new UnsupportedOperationException(
+                        String.format("Unsupported field selector definition: %s.", value));
+            }
+        }
+        if (operatorList.size() == 1) {
+            return operatorList.get(0);
+        }
+        throw new UnsupportedOperationException("Compound fields selectors are not supported yet.");
+    }
 }

@@ -1,12 +1,13 @@
 package org.kd.worthlessdb.storage;
 
 import org.json.JSONObject;
-import org.kd.worthlessdb.operations.search.SearchOperator;
-import org.kd.worthlessdb.operations.search.SearchUtils;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static org.kd.worthlessdb.storage.search.SearchUtils.buildFieldsSelector;
+import static org.kd.worthlessdb.storage.search.SearchUtils.buildSearchOperator;
 
 /**
  * @author kirk
@@ -27,16 +28,17 @@ public class InMemoryStorage implements Storage {
 
     @Override
     public String insert(String collection, JSONObject obj) {
-        UUID id = UUID.randomUUID();
-        collections.get(collection).put(id, obj);
-        return id.toString();
+        String idString = obj.optString("_id", UUID.randomUUID().toString());
+        obj.put("_id", idString);
+        collections.get(collection).put(UUID.fromString(idString), obj);
+        return idString;
     }
 
     @Override
-    public List<JSONObject> find(String collection, JSONObject query) {
-        SearchOperator searchOperator = SearchUtils.buildSearchOperator(query);
+    public List<JSONObject> find(String collection, JSONObject query, JSONObject fields) {
         return collections.get(collection).values().stream()
-                .filter(searchOperator::match)
+                .filter(buildSearchOperator(query)::match)
+                .map(buildFieldsSelector(fields)::map)
                 .collect(Collectors.toList());
     }
 }

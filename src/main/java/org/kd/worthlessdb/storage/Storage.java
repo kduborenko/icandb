@@ -11,5 +11,5 @@ public interface Storage {
 
     String insert(String collection, JSONObject obj);
 
-    List<JSONObject> find(String collection, JSONObject query);
+    List<JSONObject> find(String collection, JSONObject query, JSONObject fields);
 }

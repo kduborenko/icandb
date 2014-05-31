@@ -62,9 +62,13 @@ class WorthlessDBIntegrationTest {
         Socket socket = new Socket("localhost", 8978);
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        def id1 = UUID.randomUUID().toString()
+        def id2 = UUID.randomUUID().toString()
+        def id3 = UUID.randomUUID().toString()
         insertObject pw, br, {
             $collection 'users2'
             $obj {
+                _id id1
                 name 'Name1'
                 age 26
             }
@@ -72,6 +76,7 @@ class WorthlessDBIntegrationTest {
         insertObject pw, br, {
             $collection 'users2'
             $obj {
+                _id id2
                 name 'Name2'
                 age 27
             }
@@ -79,6 +84,7 @@ class WorthlessDBIntegrationTest {
         insertObject pw, br, {
             $collection 'users2'
             $obj {
+                _id id3
                 name 'Name3'
                 age 26
             }
@@ -93,14 +99,33 @@ class WorthlessDBIntegrationTest {
                 }
             }
         })
-        def result = parse br.readLine()
         assertEquals([
                 $status: 'ok',
                 $res: unorderedCollection([
-                        [name: 'Name1', age: 26],
-                        [name: 'Name3', age: 26]
+                        [name: 'Name1', age: 26, _id: id1],
+                        [name: 'Name3', age: 26, _id: id3]
                 ])
-        ], result);
+        ], parse(br.readLine()));
+
+        pw.println(json {
+            $op 'find'
+            $arg {
+                $collection 'users2'
+                $query {
+                    age 26
+                }
+                $fields {
+                    name 1
+                }
+            }
+        })
+        assertEquals([
+                $status: 'ok',
+                $res: unorderedCollection([
+                        [name: 'Name1'],
+                        [name: 'Name3']
+                ])
+        ], parse(br.readLine()));
     }
 
     private static void insertObject(PrintWriter pw, BufferedReader br, obj) {
@@ -108,8 +133,7 @@ class WorthlessDBIntegrationTest {
             $op 'insert'
             $arg obj
         });
-        def result = parse br.readLine()
-        assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], result);
+        assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], parse(br.readLine()));
     }
 
     private static def $anyObject = new Object() {

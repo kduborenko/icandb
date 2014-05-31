@@ -1,4 +1,4 @@
-package org.kd.worthlessdb.operations.search;
+package org.kd.worthlessdb.storage.search;
 
 import org.json.JSONObject;
 import org.springframework.util.ObjectUtils;
