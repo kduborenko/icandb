@@ -6,8 +6,8 @@ import org.springframework.stereotype.Repository;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.kd.worthlessdb.storage.search.SearchUtils.buildFieldsSelector;
-import static org.kd.worthlessdb.storage.search.SearchUtils.buildSearchOperator;
+import static org.kd.worthlessdb.storage.SearchUtils.buildFieldsSelector;
+import static org.kd.worthlessdb.storage.SearchUtils.buildSearchOperator;
 
 /**
  * @author kirk

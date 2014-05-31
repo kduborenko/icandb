@@ -126,6 +126,27 @@ class WorthlessDBIntegrationTest {
                         [name: 'Name3']
                 ])
         ], parse(br.readLine()));
+
+        pw.println(json {
+            $op 'find'
+            $arg {
+                $collection 'users2'
+                $query {
+                    age 26
+                }
+                $fields {
+                    name 1
+                    age 1
+                }
+            }
+        })
+        assertEquals([
+                $status: 'ok',
+                $res: unorderedCollection([
+                        [name: 'Name1', age: 26],
+                        [name: 'Name3', age: 26]
+                ])
+        ], parse(br.readLine()));
     }
 
     private static void insertObject(PrintWriter pw, BufferedReader br, obj) {
