@@ -39,7 +39,13 @@ class WorthlessDBIntegrationTest {
             }
         };
         pw.println(command);
-        Assert.assertEquals(command, br.readLine());
+        Assert.assertEquals(json {
+            $status 'ok'
+            $res {
+                key1 'val1'
+                key2 'val2'
+            }
+        }, br.readLine());
     }
 
     private static def json(Closure closure) {

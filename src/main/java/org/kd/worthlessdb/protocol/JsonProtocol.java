@@ -2,9 +2,14 @@ package org.kd.worthlessdb.protocol;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONObject;
+import org.json.JSONStringer;
+import org.kd.worthlessdb.operations.Operation;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.util.Map;
 
 /**
  * @author kirk
@@ -13,6 +18,9 @@ import java.io.*;
 public class JsonProtocol implements Protocol {
 
     private static final Log LOG = LogFactory.getLog(JsonProtocol.class);
+
+    @Autowired
+    private Map<String, Operation> operations;
 
     @Override
     public void handleInputStream(InputStream inputStream, OutputStream outputStream) {
@@ -29,8 +37,23 @@ public class JsonProtocol implements Protocol {
 
     private void processCommand(String command, PrintWriter pw) {
         LOG.debug("Command is received: " + command);
-        // echo
-        pw.println(command);
+        JSONObject jsonObject = new JSONObject(command);
+        String operationName = jsonObject.getString("$op");
+        Operation operation = operations.get(operationName);
+        if (operation == null) {
+            pw.println(new JSONStringer()
+                    .object()
+                    .key("$status").value("error")
+                    .key("$message").value(String.format("Operation '%s' not found.", operationName))
+                    .endObject().toString());
+            return;
+        }
+        JSONObject res = operation.execute(jsonObject.getJSONObject("$arg"));
+        pw.println(new JSONStringer()
+                .object()
+                .key("$status").value("ok")
+                .key("$res").value(res)
+                .endObject().toString());
     }
 
 }
