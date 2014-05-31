@@ -61,8 +61,14 @@ class WorthlessDBIntegrationTest {
         pw.println(command);
 
         def result = parse br.readLine()
-        result.$res.remove '$id'  // remove generated id
-        assertEquals([$status: 'ok', $res: [$inserted: 1]], result);
+        assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], result);
+    }
+
+    private static def $anyObject = new Object() {
+        @Override
+        boolean equals(Object obj) {
+            return true
+        }
     }
 
     private static def json(Closure closure) {
