@@ -53,7 +53,19 @@ public class JsonProtocol implements Protocol {
                     .endObject().toString());
             return;
         }
-        JSONObject res = operation.execute(jsonObject.getJSONObject("$arg"));
+        Object res;
+        try {
+             res = operation.execute(jsonObject.getJSONObject("$arg"));
+        } catch (Exception e) {
+            LOG.error("Error during operation execution.", e);
+            pw.println(new JSONStringer()
+                    .object()
+                    .key("$status").value("error")
+                    .key("$message").value(e.getMessage())
+                    .key("$trace").value(e.getStackTrace())
+                    .endObject().toString());
+            return;
+        }
         pw.println(new JSONStringer()
                 .object()
                 .key("$status").value("ok")

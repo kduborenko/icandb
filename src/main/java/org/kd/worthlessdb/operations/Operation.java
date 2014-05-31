@@ -6,5 +6,5 @@ import org.json.JSONObject;
  * @author kirk
  */
 public interface Operation {
-    JSONObject execute(JSONObject arg);
+    Object execute(JSONObject arg);
 }

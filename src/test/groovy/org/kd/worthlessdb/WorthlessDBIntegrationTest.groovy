@@ -28,7 +28,7 @@ class WorthlessDBIntegrationTest {
     }
 
     @Test
-    public void echo() throws IOException {
+    public void echo() {
         Socket socket = new Socket("localhost", 8978);
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
@@ -44,22 +44,70 @@ class WorthlessDBIntegrationTest {
     }
 
     @Test
-    public void insert() throws IOException {
+    public void insert() {
         Socket socket = new Socket("localhost", 8978);
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
-        String command = json {
-            $op 'insert'
+        insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                name 'Name1'
+                age 26
+            }
+        }
+    }
+    
+    @Test
+    public void findByField() {
+        Socket socket = new Socket("localhost", 8978);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        insertObject pw, br, {
+            $collection 'users2'
+            $obj {
+                name 'Name1'
+                age 26
+            }
+        }
+        insertObject pw, br, {
+            $collection 'users2'
+            $obj {
+                name 'Name2'
+                age 27
+            }
+        }
+        insertObject pw, br, {
+            $collection 'users2'
+            $obj {
+                name 'Name3'
+                age 26
+            }
+        }
+
+        pw.println(json {
+            $op 'find'
             $arg {
-                $collection 'users'
-                $obj {
-                    name 'Name'
+                $collection 'users2'
+                $query {
                     age 26
                 }
             }
-        };
-        pw.println(command);
+        })
+        def result = parse br.readLine()
+        assertEquals([
+                $status: 'ok',
+                $res: unorderedCollection([
+                        [name: 'Name1', age: 26],
+                        [name: 'Name3', age: 26]
+                ])
+        ], result);
+    }
 
+    private static void insertObject(PrintWriter pw, BufferedReader br, obj) {
+        pw.println(json {
+            $op 'insert'
+            $arg obj
+        });
         def result = parse br.readLine()
         assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], result);
     }
@@ -68,6 +116,16 @@ class WorthlessDBIntegrationTest {
         @Override
         boolean equals(Object obj) {
             return true
+        }
+    }
+
+    private static def unorderedCollection(def collection) {
+        new HashSet(collection) {
+            @SuppressWarnings("GroovyAssignabilityCheck")
+            @Override
+            boolean equals(def o) {
+                return super.equals(new HashSet(o))
+            }
         }
     }
 
