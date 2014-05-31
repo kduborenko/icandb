@@ -23,7 +23,9 @@ public class InMemoryStorage implements Storage {
     };
 
     @Override
-    public void insert(String collection, JSONObject obj) {
-        collections.get(collection).put(UUID.randomUUID(), obj);
+    public String insert(String collection, JSONObject obj) {
+        UUID id = UUID.randomUUID();
+        collections.get(collection).put(id, obj);
+        return id.toString();
     }
 }

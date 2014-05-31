@@ -7,6 +7,6 @@ import org.json.JSONObject;
  */
 public interface Storage {
 
-    void insert(String collection, JSONObject obj);
+    String insert(String collection, JSONObject obj);
 
 }

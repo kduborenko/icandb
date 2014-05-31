@@ -1,13 +1,14 @@
 package org.kd.worthlessdb
 
 import groovy.json.JsonBuilder
-import org.json.JSONStringer
+import groovy.json.JsonSlurper
 import org.junit.AfterClass
-import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 import org.kd.worthlessdb.services.WorthlessDbService
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
+
+import static org.junit.Assert.assertEquals
 
 /**
  * @author kirk
@@ -39,13 +40,7 @@ class WorthlessDBIntegrationTest {
             }
         };
         pw.println(command);
-        Assert.assertEquals(json {
-            $status 'ok'
-            $res {
-                key1 'val1'
-                key2 'val2'
-            }
-        }, br.readLine());
+        assertEquals([$status: 'ok', $res: [key1: 'val1', key2: 'val2']], parse(br.readLine()));
     }
 
     @Test
@@ -64,17 +59,19 @@ class WorthlessDBIntegrationTest {
             }
         };
         pw.println(command);
-        Assert.assertEquals(json {
-            $status 'ok'
-            $res {
-                $inserted 1
-            }
-        }, br.readLine());
+
+        def result = parse br.readLine()
+        result.$res.remove '$id'  // remove generated id
+        assertEquals([$status: 'ok', $res: [$inserted: 1]], result);
     }
 
     private static def json(Closure closure) {
         def builder = new JsonBuilder()
         builder closure
         builder as String
+    }
+
+    private static def parse(String json) {
+        new JsonSlurper().parseText json
     }
 }

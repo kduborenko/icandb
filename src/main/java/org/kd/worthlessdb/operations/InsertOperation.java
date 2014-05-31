@@ -12,8 +12,8 @@ public class InsertOperation extends StorageOperation {
     @Override
     public JSONObject execute(JSONObject arg) {
         String collection = arg.getString("$collection");
-        getStorage().insert(collection, arg.getJSONObject("$obj"));
-        return new JSONObject().put("$inserted", 1);
+        String id = getStorage().insert(collection, arg.getJSONObject("$obj"));
+        return new JSONObject().put("$inserted", 1).put("$id", id);
     }
 
 }
