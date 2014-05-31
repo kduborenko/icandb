@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -19,8 +20,12 @@ public class JsonProtocol implements Protocol {
 
     private static final Log LOG = LogFactory.getLog(JsonProtocol.class);
 
+    private final Map<String, Operation> operations;
+
     @Autowired
-    private Map<String, Operation> operations;
+    public JsonProtocol(Map<String, Operation> operations) {
+        this.operations = Collections.unmodifiableMap(operations);
+    }
 
     @Override
     public void handleInputStream(InputStream inputStream, OutputStream outputStream) {

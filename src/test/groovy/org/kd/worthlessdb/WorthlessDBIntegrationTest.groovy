@@ -26,7 +26,7 @@ class WorthlessDBIntegrationTest {
         context.getBean(WorthlessDbService.class).stop();
     }
 
-    @Test(timeout = 2000l)
+    @Test
     public void echo() throws IOException {
         Socket socket = new Socket("localhost", 8978);
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -44,6 +44,30 @@ class WorthlessDBIntegrationTest {
             $res {
                 key1 'val1'
                 key2 'val2'
+            }
+        }, br.readLine());
+    }
+
+    @Test
+    public void insert() throws IOException {
+        Socket socket = new Socket("localhost", 8978);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        String command = json {
+            $op 'insert'
+            $arg {
+                $collection 'users'
+                $obj {
+                    name 'Name'
+                    age 26
+                }
+            }
+        };
+        pw.println(command);
+        Assert.assertEquals(json {
+            $status 'ok'
+            $res {
+                $inserted 1
             }
         }, br.readLine());
     }
