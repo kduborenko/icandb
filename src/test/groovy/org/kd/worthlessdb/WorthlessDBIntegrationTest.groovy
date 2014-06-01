@@ -75,6 +75,34 @@ class WorthlessDBIntegrationTest {
         });
         assertEquals('error', parse(br.readLine()).$status);
     }
+
+    @Test
+    public void update() {
+        Socket socket = new Socket("localhost", 8978);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
+        def id = insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                name 'Name1'
+                age 26
+            }
+        }
+        pw.println(json {
+            $op 'update'
+            $arg {
+                $collection 'users'
+                $query {
+                    _id id
+                }
+                $obj {
+                    name 'Name2'
+                    age 27
+                }
+            }
+        });
+        assertEquals([$status: 'ok', $res: [$updated: 1]], parse(br.readLine()));
+    }
     
     @Test
     public void findByField() {

@@ -14,4 +14,6 @@ public interface Storage {
     List<JSONObject> find(String collection, JSONObject query, JSONObject fields);
 
     void removeAll();
+
+    int update(String collection, JSONObject query, JSONObject obj);
 }

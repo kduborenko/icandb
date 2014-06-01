@@ -1,5 +1,7 @@
 package org.kd.worthlessdb.storage;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.json.JSONObject;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +16,8 @@ import static org.kd.worthlessdb.storage.SearchUtils.buildSearchOperator;
  */
 @Repository
 public class InMemoryStorage implements Storage {
+
+    private static final Log LOG = LogFactory.getLog(InMemoryStorage.class);
 
     private Map<String, Map<UUID, JSONObject>> collections = new HashMap<String, Map<UUID, JSONObject>>() {
         @Override
@@ -51,5 +55,23 @@ public class InMemoryStorage implements Storage {
     @Override
     public void removeAll() {
         new HashSet<>(collections.keySet()).forEach(collections::remove);
+    }
+
+    @Override
+    public int update(String colName, JSONObject query, JSONObject obj) {
+        return find(colName, query, new JSONObject().put("_id", 1))
+                .stream()
+                .map((rs) -> rs.getString("_id"))
+                .reduce(0, (c, id) -> c + updateById(colName, id, obj), Integer::sum);
+    }
+
+    private int updateById(String colName, String id, JSONObject obj) {
+        try {
+            collections.get(colName).put(UUID.fromString(id), obj.put("_id", id));
+            return 1;
+        } catch (Exception e) {
+            LOG.error("Cannot update record by id: " + id);
+            return 0;
+        }
     }
 }
