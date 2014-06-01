@@ -27,10 +27,16 @@ public class InMemoryStorage implements Storage {
     };
 
     @Override
-    public String insert(String collection, JSONObject obj) {
+    public String insert(String colName, JSONObject obj) throws StorageException {
         String idString = obj.optString("_id", UUID.randomUUID().toString());
         obj.put("_id", idString);
-        collections.get(collection).put(UUID.fromString(idString), obj);
+        Map<UUID, JSONObject> collection = collections.get(colName);
+        UUID id = UUID.fromString(idString);
+        if (collection.containsKey(id)) {
+            throw new StorageException(
+                    String.format("Object with id '%s' already exists in collection '%s'.", idString, colName));
+        }
+        collection.put(id, obj);
         return idString;
     }
 

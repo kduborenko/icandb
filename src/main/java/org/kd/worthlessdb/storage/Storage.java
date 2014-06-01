@@ -9,7 +9,7 @@ import java.util.List;
  */
 public interface Storage {
 
-    String insert(String collection, JSONObject obj);
+    String insert(String collection, JSONObject obj) throws StorageException;
 
     List<JSONObject> find(String collection, JSONObject query, JSONObject fields);
 

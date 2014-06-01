@@ -55,13 +55,25 @@ class WorthlessDBIntegrationTest {
         Socket socket = new Socket("localhost", 8978);
         BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
         PrintWriter pw = new PrintWriter(socket.outputStream, true);
-        insertObject pw, br, {
+        def id = insertObject pw, br, {
             $collection 'users'
             $obj {
                 name 'Name1'
                 age 26
             }
         }
+        pw.println(json {
+            $op 'insert'
+            $arg {
+                $collection 'users'
+                $obj {
+                    _id id
+                    name 'Name2'
+                    age 27
+                }
+            }
+        });
+        assertEquals('error', parse(br.readLine()).$status);
     }
     
     @Test
@@ -190,12 +202,14 @@ class WorthlessDBIntegrationTest {
         ], parse(br.readLine()));
     }
 
-    private static void insertObject(PrintWriter pw, BufferedReader br, obj) {
+    private static def insertObject(PrintWriter pw, BufferedReader br, obj) {
         pw.println(json {
             $op 'insert'
             $arg obj
         });
-        assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], parse(br.readLine()));
+        def response = parse(br.readLine())
+        assertEquals([$status: 'ok', $res: [$inserted: 1, $id: $anyObject]], response);
+        return response.$res.$id
     }
 
     private static def $anyObject = new Object() {
