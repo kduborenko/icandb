@@ -74,4 +74,21 @@ public class InMemoryStorage implements Storage {
             return 0;
         }
     }
+
+    @Override
+    public int delete(String colName, JSONObject query) {
+        return find(colName, query, new JSONObject().put("_id", 1))
+                .stream()
+                .map((rs) -> rs.getString("_id"))
+                .reduce(0, (c, id) -> c + deleteById(colName, id), Integer::sum);
+    }
+
+    private int deleteById(String colName, String id) {
+        try {
+            return collections.get(colName).remove(UUID.fromString(id)) == null ? 0 : 1;
+        } catch (Exception e) {
+            LOG.error("Cannot delete record by id: " + id);
+            return 0;
+        }
+    }
 }

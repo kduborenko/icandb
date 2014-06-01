@@ -117,6 +117,51 @@ class WorthlessDBIntegrationTest {
                 ])
         ], parse(br.readLine()));
     }
+
+    @Test
+    public void delete() {
+        Socket socket = new Socket("localhost", 8978);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
+        insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                name 'Name1'
+                age 26
+            }
+        }
+        def id2 = insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                name 'Name2'
+                age 27
+            }
+        }
+        pw.println(json {
+            $op 'delete'
+            $arg {
+                $collection 'users'
+                $query {
+                    name 'Name1'
+                }
+            }
+        });
+        assertEquals([$status: 'ok', $res: [$deleted: 1]], parse(br.readLine()));
+
+        pw.println(json {
+            $op 'find'
+            $arg {
+                $collection 'users'
+                $query {}
+            }
+        })
+        assertEquals([
+                $status: 'ok',
+                $res: unorderedCollection([
+                        [name: 'Name2', age: 27, _id: id2],
+                ])
+        ], parse(br.readLine()));
+    }
     
     @Test
     public void findByField() {

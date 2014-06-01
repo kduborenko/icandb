@@ -16,4 +16,6 @@ public interface Storage {
     void removeAll();
 
     int update(String collection, JSONObject query, JSONObject obj);
+
+    int delete(String collection, JSONObject query);
 }
