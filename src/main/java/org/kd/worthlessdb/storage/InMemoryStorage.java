@@ -41,4 +41,9 @@ public class InMemoryStorage implements Storage {
                 .map(buildFieldsSelector(fields)::map)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public void removeAll() {
+        new HashSet<>(collections.keySet()).forEach(collections::remove);
+    }
 }

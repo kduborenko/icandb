@@ -2,10 +2,12 @@ package org.kd.worthlessdb
 
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
+import org.junit.After
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import org.kd.worthlessdb.services.WorthlessDbService
+import org.kd.worthlessdb.storage.Storage
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import static org.junit.Assert.assertEquals
@@ -19,19 +21,24 @@ class WorthlessDBIntegrationTest {
 
     @BeforeClass
     public static void setUp() {
-        context.getBean(WorthlessDbService.class).start();
+        context.getBean(WorthlessDbService).start()
     }
 
     @AfterClass
     public static void tearDown() {
-        context.getBean(WorthlessDbService.class).stop();
+        context.getBean(WorthlessDbService).stop()
+    }
+
+    @After
+    public void clean() {
+        context.getBean(Storage).removeAll()
     }
 
     @Test
     public void echo() {
         Socket socket = new Socket("localhost", 8978);
-        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
         String command = json {
             $op 'echo'
             $arg {
@@ -46,8 +53,8 @@ class WorthlessDBIntegrationTest {
     @Test
     public void insert() {
         Socket socket = new Socket("localhost", 8978);
-        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
         insertObject pw, br, {
             $collection 'users'
             $obj {
@@ -60,13 +67,13 @@ class WorthlessDBIntegrationTest {
     @Test
     public void findByField() {
         Socket socket = new Socket("localhost", 8978);
-        BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
         def id1 = UUID.randomUUID().toString()
         def id2 = UUID.randomUUID().toString()
         def id3 = UUID.randomUUID().toString()
         insertObject pw, br, {
-            $collection 'users2'
+            $collection 'users'
             $obj {
                 _id id1
                 name 'Name1'
@@ -74,7 +81,7 @@ class WorthlessDBIntegrationTest {
             }
         }
         insertObject pw, br, {
-            $collection 'users2'
+            $collection 'users'
             $obj {
                 _id id2
                 name 'Name2'
@@ -82,7 +89,7 @@ class WorthlessDBIntegrationTest {
             }
         }
         insertObject pw, br, {
-            $collection 'users2'
+            $collection 'users'
             $obj {
                 _id id3
                 name 'Name3'
@@ -93,7 +100,7 @@ class WorthlessDBIntegrationTest {
         pw.println(json {
             $op 'find'
             $arg {
-                $collection 'users2'
+                $collection 'users'
                 $query {
                     age 26
                 }
@@ -106,11 +113,45 @@ class WorthlessDBIntegrationTest {
                         [name: 'Name3', age: 26, _id: id3]
                 ])
         ], parse(br.readLine()));
+    }
+
+    @Test
+    public void selectFields() {
+        Socket socket = new Socket("localhost", 8978);
+        BufferedReader br = new BufferedReader(new InputStreamReader(socket.inputStream));
+        PrintWriter pw = new PrintWriter(socket.outputStream, true);
+        def id1 = UUID.randomUUID().toString()
+        def id2 = UUID.randomUUID().toString()
+        def id3 = UUID.randomUUID().toString()
+        insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                _id id1
+                name 'Name1'
+                age 26
+            }
+        }
+        insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                _id id2
+                name 'Name2'
+                age 27
+            }
+        }
+        insertObject pw, br, {
+            $collection 'users'
+            $obj {
+                _id id3
+                name 'Name3'
+                age 26
+            }
+        }
 
         pw.println(json {
             $op 'find'
             $arg {
-                $collection 'users2'
+                $collection 'users'
                 $query {
                     age 26
                 }
@@ -130,7 +171,7 @@ class WorthlessDBIntegrationTest {
         pw.println(json {
             $op 'find'
             $arg {
-                $collection 'users2'
+                $collection 'users'
                 $query {
                     age 26
                 }
