@@ -102,6 +102,20 @@ class WorthlessDBIntegrationTest {
             }
         });
         assertEquals([$status: 'ok', $res: [$updated: 1]], parse(br.readLine()));
+
+        pw.println(json {
+            $op 'find'
+            $arg {
+                $collection 'users'
+                $query {}
+            }
+        })
+        assertEquals([
+                $status: 'ok',
+                $res: unorderedCollection([
+                        [name: 'Name2', age: 27, _id: id],
+                ])
+        ], parse(br.readLine()));
     }
     
     @Test
