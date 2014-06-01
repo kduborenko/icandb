@@ -6,6 +6,8 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.kd.worthlessdb.storage.SearchUtils.buildFieldsSelector;
@@ -62,17 +64,19 @@ public class InMemoryStorage implements Storage {
         return find(colName, query, new JSONObject().put("_id", 1))
                 .stream()
                 .map((rs) -> rs.getString("_id"))
-                .reduce(0, (c, id) -> c + updateById(colName, id, obj), Integer::sum);
+                .map(updateById(colName, obj))
+                .reduce(0, Integer::sum);
     }
 
-    private int updateById(String colName, String id, JSONObject obj) {
-        try {
-            collections.get(colName).put(UUID.fromString(id), obj.put("_id", id));
-            return 1;
-        } catch (Exception e) {
-            LOG.error("Cannot update record by id: " + id);
-            return 0;
-        }
+    private Function<String, Integer> updateById(String colName, JSONObject obj) {
+        return handleExceptions(
+                (id) -> {
+                    collections.get(colName).put(UUID.fromString(id), obj.put("_id", id));
+                    return 1;
+                },
+                0,
+                (id) -> LOG.error("Cannot update record by id: " + id)
+        );
     }
 
     @Override
@@ -80,15 +84,26 @@ public class InMemoryStorage implements Storage {
         return find(colName, query, new JSONObject().put("_id", 1))
                 .stream()
                 .map((rs) -> rs.getString("_id"))
-                .reduce(0, (c, id) -> c + deleteById(colName, id), Integer::sum);
+                .map(deleteById(colName))
+                .reduce(0, Integer::sum);
     }
 
-    private int deleteById(String colName, String id) {
-        try {
-            return collections.get(colName).remove(UUID.fromString(id)) == null ? 0 : 1;
-        } catch (Exception e) {
-            LOG.error("Cannot delete record by id: " + id);
-            return 0;
-        }
+    private Function<String, Integer> deleteById(String colName) {
+        return handleExceptions(
+                (id) -> collections.get(colName).remove(UUID.fromString(id)) == null ? 0 : 1,
+                0,
+                (id) -> LOG.error("Cannot delete record by id: " + id)
+        );
+    }
+
+    private static <T, R> Function<T, R> handleExceptions(Function<T, R> function, R defaultValue, Consumer<T> onError) {
+        return (T t) -> {
+            try {
+                return function.apply(t);
+            } catch (Exception e) {
+                onError.accept(t);
+                return defaultValue;
+            }
+        };
     }
 }
