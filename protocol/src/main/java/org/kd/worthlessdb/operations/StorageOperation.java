@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * @author kirk
  */
-public abstract class StorageOperation implements Operation {
+public abstract class StorageOperation<T> implements Operation<T> {
 
     @Autowired
     private WorthlessDB worthlessDB;

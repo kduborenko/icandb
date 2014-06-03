@@ -2,6 +2,7 @@ package org.kd.worthlessdb.storage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kd.worthlessdb.WorthlessDBException;
 import org.kd.worthlessdb.WorthlessDB;
@@ -49,20 +50,25 @@ public class InMemoryStorage implements WorthlessDB {
     }
 
     @Override
-    public List<JSONObject> find(String collection, JSONObject query, JSONObject fields) {
+    public JSONArray find(String collection, JSONObject query, JSONObject fields) {
+        return new JSONArray(findObjects(collection, query, fields));
+    }
+
+    public List<JSONObject> findObjects(String collection, JSONObject query, JSONObject fields) {
         return collections.get(collection).values().stream()
                 .filter(buildSearchOperator(query)::match)
                 .map(buildFieldsSelector(fields)::map)
                 .collect(Collectors.toList());
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void removeAll() {
         new HashSet<>(collections.keySet()).forEach(collections::remove);
     }
 
     @Override
     public int update(String colName, JSONObject query, JSONObject obj) {
-        return find(colName, query, new JSONObject().put("_id", 1))
+        return findObjects(colName, query, new JSONObject().put("_id", 1))
                 .stream()
                 .map((rs) -> rs.getString("_id"))
                 .map(updateById(colName, obj))
@@ -82,7 +88,7 @@ public class InMemoryStorage implements WorthlessDB {
 
     @Override
     public int delete(String colName, JSONObject query) {
-        return find(colName, query, new JSONObject().put("_id", 1))
+        return findObjects(colName, query, new JSONObject().put("_id", 1))
                 .stream()
                 .map((rs) -> rs.getString("_id"))
                 .map(deleteById(colName))

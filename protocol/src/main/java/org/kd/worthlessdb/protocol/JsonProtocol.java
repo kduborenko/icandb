@@ -43,7 +43,7 @@ public class JsonProtocol implements Protocol {
     private void processCommand(String command, PrintWriter pw) {
         LOG.debug("Command is received: " + command);
         JSONObject jsonObject = new JSONObject(command);
-        String operationName = jsonObject.getString("$op");
+        String operationName = jsonObject.optString("$op");
         Operation operation = operations.get(operationName);
         if (operation == null) {
             pw.println(new JSONStringer()

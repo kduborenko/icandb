@@ -6,4 +6,6 @@ include 'in-memory-storage'
 include 'network'
 include 'protocol'
 include 'operations-api'
+include 'driver'
+include 'integration-tests'
 

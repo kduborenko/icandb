@@ -6,6 +6,6 @@ import org.kd.worthlessdb.WorthlessDBException;
 /**
  * @author kirk
  */
-public interface Operation {
-    Object execute(JSONObject arg) throws WorthlessDBException;
+public interface Operation<T> {
+    T execute(JSONObject arg) throws WorthlessDBException;
 }

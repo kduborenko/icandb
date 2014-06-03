@@ -1,0 +1,11 @@
+apply plugin: 'groovy'
+
+dependencies {
+
+    compile project(':driver')
+    compile project(':app')
+
+    testCompile group: 'org.codehaus.groovy',
+            name: 'groovy-all',
+            version: '2.3.1'
+}

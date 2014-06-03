@@ -7,10 +7,10 @@ import org.springframework.stereotype.Component;
  * @author kirk
  */
 @Component("echo")
-public class EchoOperation implements Operation {
+public class EchoOperation implements Operation<JSONObject> {
 
     @Override
-    public Object execute(JSONObject arg) {
+    public JSONObject execute(JSONObject arg) {
         return arg;
     }
 
