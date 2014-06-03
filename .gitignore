@@ -3,3 +3,4 @@ gradle
 worthlessdb.iml
 worthlessdb.iws
 worthlessdb.ipr
+*/*.iml

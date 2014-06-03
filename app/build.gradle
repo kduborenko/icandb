@@ -1,0 +1,19 @@
+apply plugin: 'groovy'
+
+task execute(type: JavaExec) {
+    main = 'org.kd.worthlessdb.App'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+dependencies {
+    compile project(':network')
+    compile project(':in-memory-storage')
+
+    runtime group: 'log4j',
+            name: 'log4j',
+            version: '1.2.17'
+
+    testCompile group: 'org.codehaus.groovy',
+            name: 'groovy-all',
+            version: '2.3.1'
+}
