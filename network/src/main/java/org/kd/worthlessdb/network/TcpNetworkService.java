@@ -21,6 +21,8 @@ import java.util.concurrent.Executors;
 public class TcpNetworkService implements NetworkService {
 
     private static final Log LOG = LogFactory.getLog(TcpNetworkService.class);
+    private static final int PORT = Integer.getInteger("network.port", 8978);
+    private static final int POOL_SIZE = Integer.getInteger("network.pool_size", 10);
 
     private ExecutorService executorService;
 
@@ -31,10 +33,9 @@ public class TcpNetworkService implements NetworkService {
 
     @Override
     public void start() throws WorthlessDBException {
-        final int port = 8978;
-        executorService = Executors.newFixedThreadPool(10);
+        executorService = Executors.newFixedThreadPool(POOL_SIZE);
         try {
-            serverSocket = new ServerSocket(port);
+            serverSocket = new ServerSocket(PORT);
         } catch (IOException e) {
             throw new WorthlessDBException(e);
         }
@@ -51,7 +52,7 @@ public class TcpNetworkService implements NetworkService {
                 LOG.error("Error during connection receiving.", e);
             }
         }).start();
-        LOG.info(String.format("Server started listening on port %s", port));
+        LOG.info(String.format("Server started listening on port %s", PORT));
     }
 
     @Override
