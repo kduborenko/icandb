@@ -1,4 +1,4 @@
-rootProject.name = 'worthlessdb'
+rootProject.name = 'icandb'
 
 include 'api'
 include 'app'

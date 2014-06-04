@@ -1,9 +1,9 @@
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.kd.worthlessdb.WorthlessDBException;
+import org.kd.icandb.WorthlessDBException;
 
-import static org.kd.worthlessdb.WorthlessDBDriver.getDriver;
+import static org.kd.icandb.WorthlessDBDriver.getDriver;
 
 /**
  * @author kirk
