@@ -1,3 +1,5 @@
+_"We Made You Because We Could"_ - Charlie Holloway. Prometheus, 2012
+
 ## Overview
 
 ICanDB is a NoSQL document-oriented storage written in Java.
