@@ -1,6 +1,7 @@
 package org.kd.icandb;
 
 import org.json.JSONObject;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,20 +21,29 @@ import java.util.regex.Pattern;
  */
 public final class ICanDBDriver {
 
-    private static final Pattern CONNECTION_STRING_PATTERN
-            = Pattern.compile("(?<protocol>\\w+)://(?<hostname>.+?):(?<port>\\d{1,5})/");
+    private static final Pattern CONNECTION_STRING_PROTOCOL_PATTERN
+            = Pattern.compile("^(?<protocol>\\w+)://(?<parametersString>.*)$");
+
+    private static final Map<String, Pattern> CONNECTION_STRING_PATTERNS
+            = Collections.unmodifiableMap(new HashMap<String, Pattern>() {
+        {
+            put("net", Pattern.compile("^(?<hostname>.+?):(?<port>\\d{1,5})/$"));
+            put("mem", Pattern.compile("^$"));
+        }
+    });
 
     private static final Map<String, Function<Matcher, ICanDB>> DRIVER_BUILDERS
             = Collections.unmodifiableMap(new HashMap<String, Function<Matcher, ICanDB>>() {
         {
             put("net", ICanDBDriver::getNetworkDriver);
+            put("mem", ICanDBDriver::getInMemoryDriver);
         }
     });
 
     private ICanDBDriver() {}
 
     public static ICanDB getDriver(String connectionString) {
-        Matcher matcher = CONNECTION_STRING_PATTERN.matcher(connectionString);
+        Matcher matcher = CONNECTION_STRING_PROTOCOL_PATTERN.matcher(connectionString);
 
         if (!matcher.find()) {
             throw new IllegalArgumentException(String.format(
@@ -41,6 +51,19 @@ public final class ICanDBDriver {
         }
 
         String protocol = matcher.group("protocol");
+        String parametersString = matcher.group("parametersString");
+
+        if (!CONNECTION_STRING_PATTERNS.containsKey(protocol)) {
+            throw new IllegalArgumentException(String.format(
+                    "Protocol '%s' is not supported.", protocol));
+        }
+
+        matcher = CONNECTION_STRING_PATTERNS.get(protocol).matcher(parametersString);
+
+        if (!matcher.find()) {
+            throw new IllegalArgumentException(String.format(
+                    "Connection string '%s' cannot be parsed.", connectionString));
+        }
 
         if (!DRIVER_BUILDERS.containsKey(protocol)) {
             throw new IllegalArgumentException(String.format(
@@ -81,6 +104,12 @@ public final class ICanDBDriver {
                     args[i]);
         }
         return new JSONObject().put("$op", method.getName()).put("$arg", request);
+    }
+
+    private static ICanDB getInMemoryDriver(Matcher matcher) {
+        return new AnnotationConfigApplicationContext(
+                ICanDBDriver.class.getPackage().getName()
+        ).getBean(ICanDB.class);
     }
 
 }
