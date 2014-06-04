@@ -1,5 +1,5 @@
 task execute(type: JavaExec) {
-    main = 'org.kd.worthlessdb.App'
+    main = 'org.kd.icandb.App'
     classpath = sourceSets.main.runtimeClasspath
 }
 
