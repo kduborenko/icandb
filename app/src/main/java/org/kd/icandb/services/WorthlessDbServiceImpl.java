@@ -1,6 +1,6 @@
 package org.kd.icandb.services;
 
-import org.kd.icandb.WorthlessDBException;
+import org.kd.icandb.ICanDBException;
 import org.kd.icandb.network.NetworkService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ public class WorthlessDbServiceImpl implements WorthlessDbService {
     private NetworkService networkService;
 
     @Override
-    public void start() throws WorthlessDBException {
+    public void start() throws ICanDBException {
         networkService.start();
     }
 

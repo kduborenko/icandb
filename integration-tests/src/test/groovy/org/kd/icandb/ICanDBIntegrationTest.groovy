@@ -62,7 +62,7 @@ class ICanDBIntegrationTest {
         }
     }
 
-    @Test(expected = WorthlessDBException)
+    @Test(expected = ICanDBException)
     public void insertUsingExistingID() {
         def id = driver.insert 'users', json {
             name 'Name1'

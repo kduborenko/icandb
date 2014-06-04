@@ -2,7 +2,7 @@ package org.kd.icandb.network;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.kd.icandb.WorthlessDBException;
+import org.kd.icandb.ICanDBException;
 import org.kd.icandb.protocol.Protocol;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,12 +32,12 @@ public class TcpNetworkService implements NetworkService {
     private Protocol protocol;
 
     @Override
-    public void start() throws WorthlessDBException {
+    public void start() throws ICanDBException {
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
         try {
             serverSocket = new ServerSocket(PORT);
         } catch (IOException e) {
-            throw new WorthlessDBException(e);
+            throw new ICanDBException(e);
         }
         new Thread(() -> {
             try {

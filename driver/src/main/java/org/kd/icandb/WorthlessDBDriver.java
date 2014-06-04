@@ -62,7 +62,7 @@ public final class WorthlessDBDriver {
                         JSONObject response = new JSONObject(br.readLine());
                         String status = response.getString("$status");
                         if ("error".equals(status)) {
-                            throw new WorthlessDBException(response.getString("$message"));
+                            throw new ICanDBException(response.getString("$message"));
                         }
                         return response.get("$res");
                     }

@@ -4,7 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.kd.icandb.WorthlessDBException;
+import org.kd.icandb.ICanDBException;
 import org.kd.icandb.ICanDB;
 import org.springframework.stereotype.Repository;
 
@@ -36,13 +36,13 @@ public class InMemoryStorage implements ICanDB {
     };
 
     @Override
-    public String insert(String colName, JSONObject obj) throws WorthlessDBException {
+    public String insert(String colName, JSONObject obj) throws ICanDBException {
         String idString = obj.optString("_id", UUID.randomUUID().toString());
         obj.put("_id", idString);
         Map<UUID, JSONObject> collection = collections.get(colName);
         UUID id = UUID.fromString(idString);
         if (collection.containsKey(id)) {
-            throw new WorthlessDBException(
+            throw new ICanDBException(
                     String.format("Object with id '%s' already exists in collection '%s'.", idString, colName));
         }
         collection.put(id, obj);
