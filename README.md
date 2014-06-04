@@ -19,7 +19,7 @@ I defined set of global goals to achieve and features to implement, but over tim
     * Indexes
     * Extend query language
 3. **Phase #3**:
-    * Implement persistent storage
+    * Persistent storage
 4. **Phase #4**:
     * Transactions
     * Rich query language (joins, aggregations, etc.)
