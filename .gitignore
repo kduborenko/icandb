@@ -1,7 +1,4 @@
 .idea
 gradle
 icandb.iml
-worthlessdb.iml
-worthlessdb.iws
-worthlessdb.ipr
 */*.iml
