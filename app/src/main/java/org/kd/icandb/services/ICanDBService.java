@@ -5,7 +5,7 @@ import org.kd.icandb.ICanDBException;
 /**
  * @author kirk
  */
-public interface WorthlessDbService {
+public interface ICanDBService {
     void start() throws ICanDBException;
 
     void stop();

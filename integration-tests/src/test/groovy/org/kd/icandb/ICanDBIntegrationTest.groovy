@@ -7,7 +7,7 @@ import org.junit.After
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
-import org.kd.icandb.services.WorthlessDbService
+import org.kd.icandb.services.ICanDBService
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import static org.junit.Assert.assertEquals
@@ -22,13 +22,13 @@ class ICanDBIntegrationTest {
 
     @BeforeClass
     public static void setUp() {
-        context.getBean(WorthlessDbService).start()
+        context.getBean(ICanDBService).start()
         driver = WorthlessDBDriver.getDriver("net://localhost:8978/")
     }
 
     @AfterClass
     public static void tearDown() {
-        context.getBean(WorthlessDbService).stop()
+        context.getBean(ICanDBService).stop()
         driver == null  // todo close driver
     }
 

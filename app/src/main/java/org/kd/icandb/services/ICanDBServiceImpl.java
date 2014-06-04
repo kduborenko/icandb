@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
  * @author kirk
  */
 @Service
-public class WorthlessDbServiceImpl implements WorthlessDbService {
+public class ICanDBServiceImpl implements ICanDBService {
 
     @Autowired
     private NetworkService networkService;
