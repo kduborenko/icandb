@@ -23,8 +23,8 @@ public final class WorthlessDBDriver {
     private static final Pattern CONNECTION_STRING_PATTERN
             = Pattern.compile("(?<protocol>\\w+)://(?<hostname>.+?):(?<port>\\d{1,5})/");
 
-    private static final Map<String, Function<Matcher, WorthlessDB>> DRIVER_BUILDERS
-            = Collections.unmodifiableMap(new HashMap<String, Function<Matcher, WorthlessDB>>() {
+    private static final Map<String, Function<Matcher, ICanDB>> DRIVER_BUILDERS
+            = Collections.unmodifiableMap(new HashMap<String, Function<Matcher, ICanDB>>() {
         {
             put("net", WorthlessDBDriver::getNetworkDriver);
         }
@@ -32,7 +32,7 @@ public final class WorthlessDBDriver {
 
     private WorthlessDBDriver() {}
 
-    public static WorthlessDB getDriver(String connectionString) {
+    public static ICanDB getDriver(String connectionString) {
         Matcher matcher = CONNECTION_STRING_PATTERN.matcher(connectionString);
 
         if (!matcher.find()) {
@@ -49,14 +49,14 @@ public final class WorthlessDBDriver {
         return DRIVER_BUILDERS.get(protocol).apply(matcher);
     }
 
-    private static WorthlessDB getNetworkDriver(Matcher matcher) {
+    private static ICanDB getNetworkDriver(Matcher matcher) {
         try {
             Socket socket = new Socket(matcher.group("hostname"), Integer.valueOf(matcher.group("port")));
             BufferedReader br = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter pw = new PrintWriter(socket.getOutputStream(), true);
-            return (WorthlessDB) Proxy.newProxyInstance(
+            return (ICanDB) Proxy.newProxyInstance(
                     ClassLoader.getSystemClassLoader(),
-                    new Class[]{WorthlessDB.class},
+                    new Class[]{ICanDB.class},
                     (proxy, method, args) -> {
                         pw.println(getRequestObject(method, args));
                         JSONObject response = new JSONObject(br.readLine());

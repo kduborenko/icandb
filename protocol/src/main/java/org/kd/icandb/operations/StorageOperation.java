@@ -1,6 +1,6 @@
 package org.kd.icandb.operations;
 
-import org.kd.icandb.WorthlessDB;
+import org.kd.icandb.ICanDB;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -9,9 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 public abstract class StorageOperation<T> implements Operation<T> {
 
     @Autowired
-    private WorthlessDB worthlessDB;
+    private ICanDB icandb;
 
-    protected WorthlessDB getStorage() {
-        return worthlessDB;
+    protected ICanDB getStorage() {
+        return icandb;
     }
 }

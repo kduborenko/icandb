@@ -6,7 +6,7 @@ import org.json.JSONObject;
 /**
  * @author kirk
  */
-public interface WorthlessDB {
+public interface ICanDB {
 
     String PARAM_COLLECTION = "$collection";
     String PARAM_OBJ = "$obj";

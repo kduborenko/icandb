@@ -15,10 +15,10 @@ import static org.junit.Assert.assertEquals
 /**
  * @author kirk
  */
-class WorthlessDBIntegrationTest {
+class ICanDBIntegrationTest {
 
     private static final def context = new AnnotationConfigApplicationContext("org.kd.icandb");
-    private static WorthlessDB driver;
+    private static ICanDB driver;
 
     @BeforeClass
     public static void setUp() {
@@ -34,7 +34,7 @@ class WorthlessDBIntegrationTest {
 
     @After
     public void clean() {
-        context.getBean(WorthlessDB).removeAll()
+        context.getBean(ICanDB).removeAll()
     }
 
     @Test

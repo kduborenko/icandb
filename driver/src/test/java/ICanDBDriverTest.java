@@ -8,7 +8,7 @@ import static org.kd.icandb.WorthlessDBDriver.getDriver;
 /**
  * @author kirk
  */
-public class WorthlessDBDriverTest {
+public class ICanDBDriverTest {
 
     @Ignore
     @Test

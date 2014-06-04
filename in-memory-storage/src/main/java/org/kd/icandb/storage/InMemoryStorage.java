@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.kd.icandb.WorthlessDBException;
-import org.kd.icandb.WorthlessDB;
+import org.kd.icandb.ICanDB;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
@@ -20,7 +20,7 @@ import static org.kd.icandb.storage.SearchUtils.buildSearchOperator;
  * @author kirk
  */
 @Repository
-public class InMemoryStorage implements WorthlessDB {
+public class InMemoryStorage implements ICanDB {
 
     private static final Log LOG = LogFactory.getLog(InMemoryStorage.class);
 
