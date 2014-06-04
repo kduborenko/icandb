@@ -3,7 +3,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.kd.icandb.ICanDBException;
 
-import static org.kd.icandb.WorthlessDBDriver.getDriver;
+import static org.kd.icandb.ICanDBDriver.getDriver;
 
 /**
  * @author kirk

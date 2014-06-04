@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 /**
  * @author kirk
  */
-public final class WorthlessDBDriver {
+public final class ICanDBDriver {
 
     private static final Pattern CONNECTION_STRING_PATTERN
             = Pattern.compile("(?<protocol>\\w+)://(?<hostname>.+?):(?<port>\\d{1,5})/");
@@ -26,11 +26,11 @@ public final class WorthlessDBDriver {
     private static final Map<String, Function<Matcher, ICanDB>> DRIVER_BUILDERS
             = Collections.unmodifiableMap(new HashMap<String, Function<Matcher, ICanDB>>() {
         {
-            put("net", WorthlessDBDriver::getNetworkDriver);
+            put("net", ICanDBDriver::getNetworkDriver);
         }
     });
 
-    private WorthlessDBDriver() {}
+    private ICanDBDriver() {}
 
     public static ICanDB getDriver(String connectionString) {
         Matcher matcher = CONNECTION_STRING_PATTERN.matcher(connectionString);

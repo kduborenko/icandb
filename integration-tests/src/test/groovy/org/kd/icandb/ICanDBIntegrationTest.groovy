@@ -23,7 +23,7 @@ class ICanDBIntegrationTest {
     @BeforeClass
     public static void setUp() {
         context.getBean(ICanDBService).start()
-        driver = WorthlessDBDriver.getDriver("net://localhost:8978/")
+        driver = ICanDBDriver.getDriver("net://localhost:8978/")
     }
 
     @AfterClass
