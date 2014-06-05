@@ -1,5 +1,5 @@
 dependencies {
     compile project(':api')
-    // todo find out how to configure optional dependencies
-    compile project(':in-memory-storage')
+
+    testRuntime project(':driver:in-memory-driver')
 }

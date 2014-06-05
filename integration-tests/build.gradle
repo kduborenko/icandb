@@ -2,7 +2,7 @@ apply plugin: 'groovy'
 
 dependencies {
 
-    compile project(':driver')
+    compile project(':driver:network-driver')
     compile project(':app')
 
     testCompile group: 'org.codehaus.groovy',

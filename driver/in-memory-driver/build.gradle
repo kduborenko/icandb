@@ -1,0 +1,4 @@
+dependencies {
+    compile project(':driver')
+    compile project(':in-memory-storage')
+}
