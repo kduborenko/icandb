@@ -1,6 +1,6 @@
 package org.kd.icandb;
 
-import org.json.JSONObject;
+import org.kd.icandb.json.JsonUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,8 +9,12 @@ import java.io.PrintWriter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.kd.icandb.utils.MapUtils.get;
 
 /**
  * @author kirk
@@ -46,11 +50,12 @@ public class NetworkDriverBuilder implements ICanDBDriverBuilder {
                     ClassLoader.getSystemClassLoader(),
                     new Class[]{ICanDB.class},
                     (proxy, method, args) -> {
-                        pw.println(getRequestObject(method, args));
-                        JSONObject response = new JSONObject(br.readLine());
-                        String status = response.getString("$status");
+                        JsonUtils.write(pw, getRequestObject(method, args));
+                        Map<String, ?> response
+                                = JsonUtils.readMap(br.readLine(), String.class, Object.class);
+                        String status = get(response, "$status", String.class);
                         if ("error".equals(status)) {
-                            throw new ICanDBException(response.getString("$message"));
+                            throw new ICanDBException(get(response, "$message", String.class));
                         }
                         return response.get("$res");
                     }
@@ -60,14 +65,18 @@ public class NetworkDriverBuilder implements ICanDBDriverBuilder {
         }
     }
 
-    private static JSONObject getRequestObject(Method method, Object[] args) {
-        JSONObject request = new JSONObject();
+    private static Map<String, ?> getRequestObject(Method method, Object[] args) {
+        Map<String, Object> arg = new HashMap<>();
         for (int i = 0; i < method.getParameters().length; i++) {
-            request.put(
-                    method.getParameters()[i]
-                            .getAnnotation(ReqParam.class).value(),
-                    args[i]);
+            if (args[i] != null) {
+                arg.put(method.getParameters()[i]
+                                .getAnnotation(ReqParam.class).value(),
+                        args[i]);
+            }
         }
-        return new JSONObject().put("$op", method.getName()).put("$arg", request);
+        Map<String, Object> request = new HashMap<>();
+        request.put("$op", method.getName());
+        request.put("$arg", arg);
+        return request;
     }
 }

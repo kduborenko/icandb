@@ -1,6 +1,6 @@
 package org.kd.icandb.storage.filter;
 
-import org.json.JSONObject;
+import java.util.Map;
 
 /**
  * @author kirk
@@ -12,7 +12,7 @@ public class AllFieldsSelector implements FieldsSelector {
     private AllFieldsSelector() {}
 
     @Override
-    public JSONObject map(JSONObject jsonObject) {
+    public Map<String, ?> map(Map<String, ?> jsonObject) {
         return jsonObject;
     }
 }

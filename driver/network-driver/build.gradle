@@ -1,3 +1,4 @@
 dependencies {
     compile project(':driver')
+    compile project(':json-utils')
 }

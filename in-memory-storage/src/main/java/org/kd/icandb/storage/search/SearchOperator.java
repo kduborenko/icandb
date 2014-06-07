@@ -1,12 +1,12 @@
 package org.kd.icandb.storage.search;
 
-import org.json.JSONObject;
+import java.util.Map;
 
 /**
  * @author kirk
  */
 public interface SearchOperator {
 
-    boolean match(JSONObject jsonObject);
+    boolean match(Map<String, ?> jsonObject);
 
 }

@@ -1,6 +1,7 @@
 package org.kd.icandb.storage.filter;
 
-import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kirk
@@ -14,7 +15,9 @@ public class OneFieldSelector implements FieldsSelector {
     }
 
     @Override
-    public JSONObject map(JSONObject jsonObject) {
-        return new JSONObject().put(key, jsonObject.opt(key));
+    public Map<String, ?> map(Map<String, ?> jsonObject) {
+        Map<String, Object> res = new HashMap<>();
+        res.put(key, jsonObject.get(key));
+        return res;
     }
 }

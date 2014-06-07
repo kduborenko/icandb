@@ -1,8 +1,11 @@
 package org.kd.icandb;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 
@@ -12,13 +15,17 @@ import static org.junit.Assert.assertEquals;
 public class ICanDBDriverTest {
 
     @Test
+    @SuppressWarnings("AssertEqualsBetweenInconvertibleTypes")
     public void testEmbeddedDriver() throws ICanDBException {
         ICanDB driver = ICanDBDriver.getDriver("mem://");
-        String id = driver.insert("users", new JSONObject().put("name", "Name1"));
-        JSONArray users = driver.find("users", new JSONObject(), null);
-        assertEquals(1, users.length());
-        assertEquals(id, users.getJSONObject(0).getString("_id"));
-        assertEquals("Name1", users.getJSONObject(0).getString("name"));
+        Map<String, Object> obj = new HashMap<>();
+        obj.put("name", "Name1");
+        String id = driver.insert("users", obj);
+        List<Map<String, ?>> users = driver.find("users", new HashMap<>(), null);
+
+        Map<String, Object> res = new HashMap<>(obj);
+        res.put("_id", id);
+        assertEquals(Arrays.asList(res), users);
     }
 
 }

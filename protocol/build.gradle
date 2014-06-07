@@ -1,5 +1,6 @@
 dependencies {
     compile project(':operations-api')
+    compile project(':json-utils')
 
     compile group: 'org.springframework',
             name: 'spring-context',

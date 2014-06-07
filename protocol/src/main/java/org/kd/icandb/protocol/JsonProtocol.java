@@ -2,15 +2,17 @@ package org.kd.icandb.protocol;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONObject;
-import org.json.JSONStringer;
+import org.kd.icandb.json.JsonUtils;
 import org.kd.icandb.operations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
+
+import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
  * @author kirk
@@ -32,45 +34,50 @@ public class JsonProtocol implements Protocol {
         BufferedReader br = new BufferedReader(new InputStreamReader(inputStream));
         PrintWriter pw = new PrintWriter(outputStream, true);
         try {
-            for (String command; (command = br.readLine()) != null;) {
+            for (String command; (command = br.readLine()) != null; ) {
                 processCommand(command, pw);
             }
         } catch (IOException e) {
+            LOG.error("Error during command processing.", e); // todo send response
             throw new RuntimeException(e);
         }
     }
 
-    private void processCommand(String command, PrintWriter pw) {
+    private void processCommand(String command, PrintWriter pw) throws IOException {
         LOG.debug("Command is received: " + command);
-        JSONObject jsonObject = new JSONObject(command);
-        String operationName = jsonObject.optString("$op");
+        Map<String, ?> jsonObject
+                = JsonUtils.readMap(command, String.class, Object.class);
+        String operationName = (String) jsonObject.get("$op");
         Operation operation = operations.get(operationName);
         if (operation == null) {
-            pw.println(new JSONStringer()
-                    .object()
-                    .key("$status").value("error")
-                    .key("$message").value(String.format("Operation '%s' not found.", operationName))
-                    .endObject().toString());
+            JsonUtils.write(pw, new HashMap<String, Object>() {{
+                put("$status", "error");
+                put("$message", String.format("Operation '%s' not found.", operationName));
+            }});
             return;
         }
-        Object res;
+        final Object res = run(operation, jsonObject, pw);
+
+        if (res == null) {
+            return;
+        }
+        JsonUtils.write(pw, new HashMap<String, Object>() {{
+            put("$status", "ok");
+            put("$res", res);
+        }});
+    }
+
+    private Object run(Operation<?> operation, Map<String, ?> jsonObject, PrintWriter pw) throws IOException {
         try {
-             res = operation.execute(jsonObject.getJSONObject("$arg"));
+            return operation.execute(getMap(jsonObject, "$arg", String.class, Object.class));
         } catch (Exception e) {
             LOG.error("Error during operation execution.", e);
-            pw.println(new JSONStringer()
-                    .object()
-                    .key("$status").value("error")
-                    .key("$message").value(e.getMessage())
-                    .key("$trace").value(e.getStackTrace())
-                    .endObject().toString());
-            return;
+            JsonUtils.write(pw, new HashMap<String, Object>() {{
+                put("$status", "error");
+                put("$message", e.getMessage());
+            }});
         }
-        pw.println(new JSONStringer()
-                .object()
-                .key("$status").value("ok")
-                .key("$res").value(res)
-                .endObject().toString());
+        return null;
     }
 
 }

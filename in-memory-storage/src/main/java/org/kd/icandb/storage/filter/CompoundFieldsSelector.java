@@ -1,10 +1,9 @@
 package org.kd.icandb.storage.filter;
 
-import org.json.JSONObject;
-
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kirk
@@ -18,16 +17,16 @@ public class CompoundFieldsSelector implements FieldsSelector {
     }
 
     @Override
-    public JSONObject map(JSONObject jsonObject) {
+    public Map<String, ?> map(Map<String, ?> jsonObject) {
         return fieldsSelectors.stream().reduce(
-                new JSONObject(), (res, fs) -> merge(res, fs.map(jsonObject)), this::merge);
+                new HashMap<>(), (res, fs) -> merge(res, fs.map(jsonObject)), this::merge);
     }
 
     @SuppressWarnings("unchecked")
-    private JSONObject merge(JSONObject res, JSONObject filtered) {
-        for (String key : (Set<String>) filtered.keySet()) {
-            res.put(key, filtered.get(key));
-        }
+    private Map<String, ?> merge(Map<String, ?> m1, Map<String, ?> m2) {
+        Map<String, Object> res = new HashMap<>();
+        res.putAll(m1);
+        res.putAll(m2);
         return res;
     }
 

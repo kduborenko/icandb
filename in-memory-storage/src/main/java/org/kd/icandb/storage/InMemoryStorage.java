@@ -2,8 +2,6 @@ package org.kd.icandb.storage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.kd.icandb.ICanDBException;
 import org.kd.icandb.ICanDB;
 import org.springframework.stereotype.Repository;
@@ -15,6 +13,7 @@ import java.util.stream.Collectors;
 
 import static org.kd.icandb.storage.SearchUtils.buildFieldsSelector;
 import static org.kd.icandb.storage.SearchUtils.buildSearchOperator;
+import static org.kd.icandb.utils.MapUtils.get;
 
 /**
  * @author kirk
@@ -24,10 +23,14 @@ public class InMemoryStorage implements ICanDB {
 
     private static final Log LOG = LogFactory.getLog(InMemoryStorage.class);
 
-    private Map<String, Map<UUID, JSONObject>> collections = new HashMap<String, Map<UUID, JSONObject>>() {
+    private static final Map<String, ?> SELECT_ID = Collections.unmodifiableMap(new HashMap<String, Object>() {{
+        put("_id", 1);
+    }});
+
+    private Map<String, Map<UUID, Map<String, ?>>> collections = new HashMap<String, Map<UUID, Map<String, ?>>>() {
         @Override
-        public Map<UUID, JSONObject> get(Object key) {
-            Map<UUID, JSONObject> collection = super.get(key);
+        public Map<UUID, Map<String, ?>> get(Object key) {
+            Map<UUID, Map<String, ?>> collection = super.get(key);
             if (collection == null) {
                 super.put((String) key, collection = new HashMap<>());
             }
@@ -36,25 +39,22 @@ public class InMemoryStorage implements ICanDB {
     };
 
     @Override
-    public String insert(String colName, JSONObject obj) throws ICanDBException {
-        String idString = obj.optString("_id", UUID.randomUUID().toString());
-        obj.put("_id", idString);
-        Map<UUID, JSONObject> collection = collections.get(colName);
+    public String insert(String colName, Map<String, ?> obj) throws ICanDBException {
+        Map<String, Object> o = new HashMap<>(obj);
+        String idString = get(o, "_id", String.class, UUID.randomUUID().toString());
+        o.put("_id", idString);
+        Map<UUID, Map<String, ?>> collection = collections.get(colName);
         UUID id = UUID.fromString(idString);
         if (collection.containsKey(id)) {
             throw new ICanDBException(
                     String.format("Object with id '%s' already exists in collection '%s'.", idString, colName));
         }
-        collection.put(id, obj);
+        collection.put(id, o);
         return idString;
     }
 
     @Override
-    public JSONArray find(String collection, JSONObject query, JSONObject fields) {
-        return new JSONArray(findObjects(collection, query, fields));
-    }
-
-    private List<JSONObject> findObjects(String collection, JSONObject query, JSONObject fields) {
+    public List<Map<String, ?>> find(String collection, Map<String, ?> query, Map<String, ?> fields) {
         return collections.get(collection).values().stream()
                 .filter(buildSearchOperator(query)::match)
                 .map(buildFieldsSelector(fields)::map)
@@ -67,18 +67,20 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public int update(String colName, JSONObject query, JSONObject obj) {
-        return findObjects(colName, query, new JSONObject().put("_id", 1))
+    public int update(String colName, Map<String, ?> query, Map<String, ?> obj) {
+        return find(colName, query, SELECT_ID)
                 .stream()
-                .map((rs) -> rs.getString("_id"))
+                .map((rs) -> get(rs, "_id", String.class))
                 .map(updateById(colName, obj))
                 .reduce(0, Integer::sum);
     }
 
-    private Function<String, Integer> updateById(String colName, JSONObject obj) {
+    private Function<String, Integer> updateById(String colName, Map<String, ?> obj) {
+        Map<String, Object> o = new HashMap<>(obj);
         return handleExceptions(
                 (id) -> {
-                    collections.get(colName).put(UUID.fromString(id), obj.put("_id", id));
+                    o.put("_id", id);
+                    collections.get(colName).put(UUID.fromString(id), o);
                     return 1;
                 },
                 0,
@@ -87,10 +89,10 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public int delete(String colName, JSONObject query) {
-        return findObjects(colName, query, new JSONObject().put("_id", 1))
+    public int delete(String colName, Map<String, ?> query) {
+        return find(colName, query, SELECT_ID)
                 .stream()
-                .map((rs) -> rs.getString("_id"))
+                .map((rs) -> get(rs, "_id", String.class))
                 .map(deleteById(colName))
                 .reduce(0, Integer::sum);
     }

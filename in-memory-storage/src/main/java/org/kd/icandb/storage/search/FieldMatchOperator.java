@@ -1,7 +1,8 @@
 package org.kd.icandb.storage.search;
 
-import org.json.JSONObject;
 import org.springframework.util.ObjectUtils;
+
+import java.util.Map;
 
 /**
  * @author kirk
@@ -17,7 +18,7 @@ public class FieldMatchOperator implements SearchOperator {
     }
 
     @Override
-    public boolean match(JSONObject jsonObject) {
+    public boolean match(Map<String, ?> jsonObject) {
         return ObjectUtils.nullSafeEquals(jsonObject.get(key), value);
     }
 }

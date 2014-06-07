@@ -1,7 +1,7 @@
 package org.kd.icandb;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import java.util.List;
+import java.util.Map;
 
 import static org.kd.icandb.ICanDBConstants.*;
 
@@ -12,19 +12,19 @@ public interface ICanDB {
 
     String insert(
             @ReqParam(PARAM_COLLECTION) String collection,
-            @ReqParam(PARAM_OBJ) JSONObject obj) throws ICanDBException;
+            @ReqParam(PARAM_OBJ) Map<String, ?> obj) throws ICanDBException;
 
-    JSONArray find(
+    List<Map<String, ?>> find(
             @ReqParam(PARAM_COLLECTION) String collection,
-            @ReqParam(PARAM_QUERY) JSONObject query,
-            @ReqParam(PARAM_FIELDS) JSONObject fields) throws ICanDBException;
+            @ReqParam(PARAM_QUERY) Map<String, ?> query,
+            @ReqParam(PARAM_FIELDS) Map<String, ?> fields) throws ICanDBException;
 
     int update(
             @ReqParam(PARAM_COLLECTION) String collection,
-            @ReqParam(PARAM_QUERY) JSONObject query,
-            @ReqParam(PARAM_OBJ) JSONObject obj) throws ICanDBException;
+            @ReqParam(PARAM_QUERY) Map<String, ?> query,
+            @ReqParam(PARAM_OBJ) Map<String, ?> obj) throws ICanDBException;
 
     int delete(
             @ReqParam(PARAM_COLLECTION) String collection,
-            @ReqParam(PARAM_QUERY) JSONObject query) throws ICanDBException;
+            @ReqParam(PARAM_QUERY) Map<String, ?> query) throws ICanDBException;
 }

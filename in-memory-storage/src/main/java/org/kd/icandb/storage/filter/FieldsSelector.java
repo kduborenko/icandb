@@ -1,12 +1,12 @@
 package org.kd.icandb.storage.filter;
 
-import org.json.JSONObject;
+import java.util.Map;
 
 /**
  * @author kirk
  */
 public interface FieldsSelector {
 
-    JSONObject map(JSONObject jsonObject);
+    Map<String, ?> map(Map<String, ?> jsonObject);
 
 }

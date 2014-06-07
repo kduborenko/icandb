@@ -1,11 +1,14 @@
 package org.kd.icandb.operations;
 
-import org.json.JSONObject;
 import org.kd.icandb.ICanDBException;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 import static org.kd.icandb.ICanDBConstants.PARAM_COLLECTION;
 import static org.kd.icandb.ICanDBConstants.PARAM_QUERY;
+import static org.kd.icandb.utils.MapUtils.get;
+import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
  * @author kirk
@@ -13,8 +16,8 @@ import static org.kd.icandb.ICanDBConstants.PARAM_QUERY;
 @Component("delete")
 public class DeleteOperation extends StorageOperation<Integer> {
     @Override
-    public Integer execute(JSONObject arg) throws ICanDBException {
-        String collection = arg.getString(PARAM_COLLECTION);
-        return getStorage().delete(collection, arg.getJSONObject(PARAM_QUERY));
+    public Integer execute(Map<String, ?> arg) throws ICanDBException {
+        String collection = get(arg, PARAM_COLLECTION, String.class);
+        return getStorage().delete(collection, getMap(arg, PARAM_QUERY, String.class, Object.class));
     }
 }

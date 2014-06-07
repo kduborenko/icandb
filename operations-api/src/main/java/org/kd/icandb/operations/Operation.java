@@ -1,11 +1,12 @@
 package org.kd.icandb.operations;
 
-import org.json.JSONObject;
 import org.kd.icandb.ICanDBException;
+
+import java.util.Map;
 
 /**
  * @author kirk
  */
 public interface Operation<T> {
-    T execute(JSONObject arg) throws ICanDBException;
+    T execute(Map<String, ?> arg) throws ICanDBException;
 }

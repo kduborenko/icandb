@@ -1,6 +1,5 @@
 package org.kd.icandb.storage;
 
-import org.json.JSONObject;
 import org.kd.icandb.storage.filter.AllFieldsSelector;
 import org.kd.icandb.storage.filter.CompoundFieldsSelector;
 import org.kd.icandb.storage.filter.FieldsSelector;
@@ -24,9 +23,9 @@ public final class SearchUtils {
     private SearchUtils() {}
 
     @SuppressWarnings("unchecked")
-    public static SearchOperator buildSearchOperator(JSONObject query) {
+    public static SearchOperator buildSearchOperator(Map<String, ?> query) {
         List<SearchOperator> operatorList = new ArrayList<>();
-        for (String key : (Set<String>) query.keySet()) {
+        for (String key : query.keySet()) {
             Object value = query.get(key);
             if (isPrimitiveValue(value)) {
                 operatorList.add(new FieldMatchOperator(key, value));
@@ -46,12 +45,12 @@ public final class SearchUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static FieldsSelector buildFieldsSelector(JSONObject fieldsSelector) {
+    public static FieldsSelector buildFieldsSelector(Map<String, ?> fieldsSelector) {
         if (fieldsSelector == null || fieldsSelector.keySet().isEmpty()) {
             return AllFieldsSelector.INSTANCE;
         }
         List<FieldsSelector> selectorList = new ArrayList<>();
-        for (String key : (Set<String>) fieldsSelector.keySet()) {
+        for (String key : fieldsSelector.keySet()) {
             Object value = fieldsSelector.get(key);
             if (Integer.valueOf(1).equals(value)) {
                 selectorList.add(new OneFieldSelector(key));
