@@ -10,4 +10,4 @@ include 'driver'
 include 'driver:in-memory-driver'
 include 'driver:network-driver'
 include 'integration-tests'
-
+include 'client-shell'

@@ -54,7 +54,7 @@ public class InMemoryStorage implements ICanDB {
         return new JSONArray(findObjects(collection, query, fields));
     }
 
-    public List<JSONObject> findObjects(String collection, JSONObject query, JSONObject fields) {
+    private List<JSONObject> findObjects(String collection, JSONObject query, JSONObject fields) {
         return collections.get(collection).values().stream()
                 .filter(buildSearchOperator(query)::match)
                 .map(buildFieldsSelector(fields)::map)

@@ -3,15 +3,12 @@ package org.kd.icandb;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import static org.kd.icandb.ICanDBConstants.*;
+
 /**
  * @author kirk
  */
 public interface ICanDB {
-
-    String PARAM_COLLECTION = "$collection";
-    String PARAM_OBJ = "$obj";
-    String PARAM_QUERY = "$query";
-    String PARAM_FIELDS = "$fields";
 
     String insert(
             @ReqParam(PARAM_COLLECTION) String collection,
