@@ -1,5 +1,3 @@
 dependencies {
     compile project(':api')
-
-    testRuntime project(':driver:in-memory-driver')
 }
