@@ -4,7 +4,7 @@ task execute(type: JavaExec) {
 }
 
 dependencies {
-    compile project(':network')
+    compile project(':service')
     compile project(':in-memory-storage')
 
     runtime group: 'log4j',

@@ -12,4 +12,4 @@ include 'driver:network-driver'
 include 'integration-tests'
 include 'client-shell'
 include 'json-utils'
-
+include 'service'

@@ -3,7 +3,12 @@ apply plugin: 'groovy'
 dependencies {
 
     compile project(':driver:network-driver')
-    compile project(':app')
+    compile project(':service')
+    compile project(':in-memory-storage')
+
+    runtime group: 'log4j',
+            name: 'log4j',
+            version: '1.2.17'
 
     testCompile group: 'org.codehaus.groovy',
             name: 'groovy-all',
