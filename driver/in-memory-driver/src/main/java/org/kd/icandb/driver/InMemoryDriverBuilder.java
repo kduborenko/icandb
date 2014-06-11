@@ -1,5 +1,8 @@
-package org.kd.icandb;
+package org.kd.icandb.driver;
 
+import org.kd.icandb.ICanDB;
+import org.kd.icandb.ICanDBDriver;
+import org.kd.icandb.ICanDBDriverBuilder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**

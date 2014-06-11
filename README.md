@@ -6,6 +6,32 @@ ICanDB is a NoSQL document-oriented storage written in Java.
 
 _ICanDB doesn't set a goal to be better than other databases. It isn't going to be most efficient DB in the world or have ideal code and documentation. It is a project where I can play with some technologies or learn some algorithms by implementing and applying it in "real" project._
 
+## Instructions
+
+To compile and start working with database you need to have installed JDK 8.
+
+### Build and verify
+
+    $ ./gradlew build
+    
+### Run client shell with embedded in-memory db
+
+    $ ./gradlew client-shell:shell
+    
+### Run network database service
+
+    $ ./gradlew app:execute
+    
+### Run client shell and connect to remote database
+
+    $ ./gradlew client-shell:shell -Dconnect=net://<host>:8978/
+    
+## Client shell
+
+Client shell is just a regular groovy shell with predefined set of objects and functions.
+
+_TBD: examples of usage_
+
 ## Roadmap
 
 I defined set of global goals to achieve and features to implement, but over time I can change it:

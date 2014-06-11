@@ -19,6 +19,12 @@ public interface ICanDB {
             @ReqParam(PARAM_QUERY) Map<String, ?> query,
             @ReqParam(PARAM_FIELDS) Map<String, ?> fields) throws ICanDBException;
 
+    default List<Map<String, ?>> find(
+            @ReqParam(PARAM_COLLECTION) String collection,
+            @ReqParam(PARAM_QUERY) Map<String, ?> query) throws ICanDBException {
+        return find(collection, query, null);
+    }
+
     int update(
             @ReqParam(PARAM_COLLECTION) String collection,
             @ReqParam(PARAM_QUERY) Map<String, ?> query,

@@ -2,3 +2,74 @@ dependencies {
     compile project(':driver')
     compile project(':json-utils')
 }
+
+sourceSets {
+    main {
+        java {
+            srcDir 'build/generated-src/java'
+        }
+    }
+}
+
+task (generateSources) << {
+    def file = file('build/generated-src/java/org/kd/icandb/driver/ICanDBNetworkDriver.java')
+    file.parentFile.mkdirs()
+    file.createNewFile()
+    def classLoader = new URLClassLoader(
+            sourceSets.main.runtimeClasspath*.toURI()*.toURL().toArray(new URL[0]))
+
+    def cl = classLoader.loadClass('org.kd.icandb.ICanDB')
+    def methods = cl.getMethods().findAll { m -> !m.default }
+
+    file << """package org.kd.icandb.driver;
+
+import java.io.IOException;
+import java.net.Socket;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.kd.icandb.ICanDB;
+
+
+@SuppressWarnings("unchecked")
+public class ICanDBNetworkDriver extends NetworkDriver implements ICanDB {
+
+    public ICanDBNetworkDriver(Socket s) throws IOException {
+        super(s);
+    }
+${
+    methods.collect {
+"""
+    ${generateSignature(it)} {
+${generateBody(it).replaceAll("(?m)^", "        ")}
+    }
+"""
+    } join ""
+}
+}
+"""
+}
+
+compileJava.dependsOn(generateSources)
+
+def generateSignature(def m) {
+    def parameters = []
+    m.parameterTypes.eachWithIndex { entry, i ->
+        parameters << "$entry.name arg$i"
+    }
+    "public $m.returnType.name $m.name(${parameters.join(', ')}) " +
+            "throws ${m.exceptionTypes*.name.join(', ')}"
+}
+
+def generateBody(def m) {
+    def body = []
+    body << "Map arg = new HashMap();"
+    m.parameters.eachWithIndex { p, i ->
+        def key = p.annotations.find({
+            it.annotationType().name == 'org.kd.icandb.ReqParam'
+        }).value()
+        body << "addArgument(arg, \"$key\", arg$i);"
+    }
+    body << "return ($m.returnType.name) super.send(\"$m.name\", arg);"
+    body.join("\n")
+}

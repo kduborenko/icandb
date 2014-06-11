@@ -90,7 +90,7 @@ class ICanDBIntegrationTest {
         assertEquals(1, updated);
 
 
-        def rs = driver.find('users', [:], null).get(0) as Map
+        def rs = driver.find('users', [:]).get(0) as Map
         assertEquals(id, rs._id);
         assertEquals('Name2', rs.name);
         assertEquals(27, rs.age);
@@ -111,7 +111,7 @@ class ICanDBIntegrationTest {
         ]
         assertEquals(1, deleted);
 
-        def rs = driver.find('users', [:], null).get(0) as Map
+        def rs = driver.find('users', [:]).get(0) as Map
         assertEquals(id, rs._id);
         assertEquals('Name2', rs.name);
         assertEquals(27, rs.age)
@@ -134,7 +134,7 @@ class ICanDBIntegrationTest {
 
         def res = driver.find 'users', [
             age: 26
-        ], null
+        ]
         assertEquals([id1, id3] as Set, [res.get(0)._id, res.get(1)._id] as Set);
     }
 
