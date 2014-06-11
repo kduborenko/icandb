@@ -14,9 +14,8 @@ dependencies {
 
 task (shell, dependsOn: 'classes') << {
     new ProcessBuilder(
-            'java',
-            '-cp', sourceSets.main.runtimeClasspath*.absolutePath.join(':'),
-            'org.kd.icandb.ICanDBShell')
+            'java', '-cp', sourceSets.main.runtimeClasspath*.absolutePath.join(':'),
+            'org.kd.icandb.ICanDBShell', System.getProperty('connect', 'mem://'))
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectInput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)

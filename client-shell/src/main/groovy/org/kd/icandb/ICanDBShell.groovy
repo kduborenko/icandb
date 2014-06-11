@@ -14,7 +14,7 @@ class ICanDBShell {
         IO io = new IO()
         Logger.io = io
 
-        def db = ICanDBDriver.getDriver("mem://")
+        def db = ICanDBDriver.getDriver(args.size() != 0 ? args[0] : 'mem://')
 
         final Groovysh shell = new Groovysh(
                 new Binding([db:db]), io)
