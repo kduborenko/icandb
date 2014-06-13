@@ -1,3 +1,5 @@
+.gradle
 .idea
 icandb.iml
+**/build
 **/*.iml
