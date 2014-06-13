@@ -1,47 +1,53 @@
 package org.kd.icandb.storage;
 
-import org.kd.icandb.storage.filter.AllFieldsSelector;
-import org.kd.icandb.storage.filter.CompoundFieldsSelector;
-import org.kd.icandb.storage.filter.FieldsSelector;
-import org.kd.icandb.storage.filter.OneFieldSelector;
+import org.kd.icandb.ICanDBException;
+import org.kd.icandb.storage.search.CompoundSearchOperator;
+import org.kd.icandb.storage.selectors.AllFieldsSelector;
+import org.kd.icandb.storage.selectors.CompoundFieldsSelector;
+import org.kd.icandb.storage.selectors.FieldsSelector;
+import org.kd.icandb.storage.selectors.OneFieldSelector;
 import org.kd.icandb.storage.search.FieldMatchOperator;
 import org.kd.icandb.storage.search.MatchAllOperator;
 import org.kd.icandb.storage.search.SearchOperator;
+import org.kd.icandb.utils.MapUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author kirk
  */
 public final class SearchUtils {
 
-    private static final Set<Class> PRIMITIVE_TYPES = Collections.unmodifiableSet(new HashSet<>(
-            Arrays.asList(String.class, Double.class, Integer.class, Boolean.class,
-                    double.class, int.class, boolean.class)
-    ));
-
     private SearchUtils() {}
 
-    @SuppressWarnings("unchecked")
-    public static SearchOperator buildSearchOperator(Map<String, ?> query) {
-        List<SearchOperator> operatorList = new ArrayList<>();
-        for (String key : query.keySet()) {
-            Object value = query.get(key);
-            if (isPrimitiveValue(value)) {
-                operatorList.add(new FieldMatchOperator(key, value));
-            }
-        }
-        if (operatorList.isEmpty()) {
+    public static SearchOperator buildSearchOperator(Map<String, ?> query) throws ICanDBException {
+        if (query == null || query.isEmpty()) {
             return MatchAllOperator.INSTANCE;
         }
-        if (operatorList.size() == 1) {
-            return operatorList.get(0);
-        }
-        throw new UnsupportedOperationException("Compound search queries are not supported yet.");
+        List<SearchOperator> operatorList = query.entrySet()
+                .stream()
+                .map(entry -> new FieldMatchOperator(entry.getKey(), buildFieldMatcher(entry.getValue())))
+                .collect(Collectors.toList());
+        return operatorList.size() == 1
+                ? operatorList.get(0)
+                : new CompoundSearchOperator(operatorList);
     }
 
-    private static boolean isPrimitiveValue(Object value) {
-        return value == null || PRIMITIVE_TYPES.contains(value.getClass());
+    @SuppressWarnings("unchecked")
+    private static <T> Function<T, Boolean> buildFieldMatcher(T value) {
+        if (value instanceof Map){
+            Map m = (Map) value;
+            if (m.containsKey("$in")) {
+                return v -> MapUtils.get(m, "$in", List.class).contains(v);
+            } else {
+                return v -> ObjectUtils.nullSafeEquals(value, v);
+            }
+        } else {
+            return v -> ObjectUtils.nullSafeEquals(value, v);
+        }
     }
 
     @SuppressWarnings("unchecked")

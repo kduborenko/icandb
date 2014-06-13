@@ -169,6 +169,45 @@ class ICanDBIntegrationTest {
         assertEquals([['name': 'Name2', 'age': 27]], res2);
     }
 
+    @Test
+    public void compoundQuery() {
+        driver.insert 'users', [
+                name: 'Name1',
+                age: 27
+        ]
+        def id = driver.insert 'users', [
+                name: 'Name2',
+                age: 27
+        ]
+        driver.insert 'users', [
+                name: 'Name2',
+                age: 26
+        ]
+        assertEquals([[_id: id]], driver.find('users', [
+                name: 'Name2',
+                age: 27
+        ], [_id: 1]));
+    }
+
+    @Test
+    public void inConditionQuery() {
+        driver.insert 'users', [
+                name: 'Name1',
+                age: 27
+        ]
+        def id1 = driver.insert 'users', [
+                name: 'Name2',
+                age: 27
+        ]
+        def id2 = driver.insert 'users', [
+                name: 'Name3',
+                age: 26
+        ]
+        assertEquals([id1, id2], driver.find('users', [
+                name: [$in: ['Name2', 'Name3']]
+        ], [_id: 1])*._id);
+    }
+
     private static def json(Closure closure) {
         def builder = new JsonBuilder()
         builder closure

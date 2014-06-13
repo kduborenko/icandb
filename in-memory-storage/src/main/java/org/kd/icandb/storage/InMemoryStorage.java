@@ -54,7 +54,8 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public List<Map<String, ?>> find(String collection, Map<String, ?> query, Map<String, ?> fields) {
+    public List<Map<String, ?>> find(String collection, Map<String, ?> query, Map<String, ?> fields)
+            throws ICanDBException {
         return collections.get(collection).values().stream()
                 .filter(buildSearchOperator(query)::match)
                 .map(buildFieldsSelector(fields)::map)
@@ -67,7 +68,7 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public int update(String colName, Map<String, ?> query, Map<String, ?> obj) {
+    public int update(String colName, Map<String, ?> query, Map<String, ?> obj) throws ICanDBException {
         return find(colName, query, SELECT_ID)
                 .stream()
                 .map((rs) -> get(rs, "_id", String.class))
@@ -89,7 +90,7 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public int delete(String colName, Map<String, ?> query) {
+    public int delete(String colName, Map<String, ?> query) throws ICanDBException {
         return find(colName, query, SELECT_ID)
                 .stream()
                 .map((rs) -> get(rs, "_id", String.class))

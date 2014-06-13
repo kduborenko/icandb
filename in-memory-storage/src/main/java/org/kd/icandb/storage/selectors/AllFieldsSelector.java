@@ -1,4 +1,4 @@
-package org.kd.icandb.storage.filter;
+package org.kd.icandb.storage.selectors;
 
 import java.util.Map;
 
