@@ -1,6 +1,5 @@
 package org.kd.icandb.storage;
 
-import org.kd.icandb.ICanDBException;
 import org.kd.icandb.storage.search.CompoundSearchOperator;
 import org.kd.icandb.storage.selectors.AllFieldsSelector;
 import org.kd.icandb.storage.selectors.CompoundFieldsSelector;
@@ -23,7 +22,7 @@ public final class SearchUtils {
 
     private SearchUtils() {}
 
-    public static SearchOperator buildSearchOperator(Map<String, ?> query) throws ICanDBException {
+    public static SearchOperator buildSearchOperator(Map<String, ?> query) {
         if (query == null || query.isEmpty()) {
             return MatchAllOperator.INSTANCE;
         }
