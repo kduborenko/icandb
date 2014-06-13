@@ -1,5 +1,6 @@
 package org.kd.icandb;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,11 @@ public interface ICanDB {
             @ReqParam(PARAM_COLLECTION) String collection,
             @ReqParam(PARAM_QUERY) Map<String, ?> query) throws ICanDBException {
         return find(collection, query, null);
+    }
+
+    default List<Map<String, ?>> find(
+            @ReqParam(PARAM_COLLECTION) String collection) throws ICanDBException {
+        return find(collection, new HashMap<>());
     }
 
     int update(

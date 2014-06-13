@@ -89,8 +89,7 @@ class ICanDBIntegrationTest {
 
         assertEquals(1, updated);
 
-
-        def rs = driver.find('users', [:]).get(0) as Map
+        def rs = driver.find('users').get(0) as Map
         assertEquals(id, rs._id);
         assertEquals('Name2', rs.name);
         assertEquals(27, rs.age);
