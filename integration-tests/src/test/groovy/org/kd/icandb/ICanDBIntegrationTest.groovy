@@ -203,9 +203,9 @@ class ICanDBIntegrationTest {
                 name: 'Name3',
                 age: 26
         ]
-        assertEquals([id1, id2], driver.find('users', [
+        assertEquals([id1, id2] as Set, driver.find('users', [
                 name: [$in: ['Name2', 'Name3']]
-        ], [_id: 1])*._id);
+        ], [_id: 1])*._id as Set);
     }
 
     private static def json(Closure closure) {
