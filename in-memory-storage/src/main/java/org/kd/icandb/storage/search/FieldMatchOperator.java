@@ -17,7 +17,7 @@ public class FieldMatchOperator implements SearchOperator {
     }
 
     @Override
-    public boolean match(Map<String, ?> jsonObject) {
-        return matcher.apply(jsonObject.get(key));
+    public boolean match(Map<String, ?> query) {
+        return matcher.apply(query.get(key));
     }
 }

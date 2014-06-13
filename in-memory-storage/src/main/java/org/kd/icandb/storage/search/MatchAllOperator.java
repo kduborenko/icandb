@@ -12,7 +12,7 @@ public final class MatchAllOperator implements SearchOperator {
     private MatchAllOperator() {}
 
     @Override
-    public boolean match(Map<String, ?> jsonObject) {
+    public boolean match(Map<String, ?> query) {
         return true;
     }
 }

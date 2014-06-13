@@ -16,9 +16,9 @@ public class CompoundSearchOperator implements SearchOperator {
     }
 
     @Override
-    public boolean match(Map<String, ?> jsonObject) {
+    public boolean match(Map<String, ?> query) {
         for (SearchOperator operator : searchOperators) {
-            if (!operator.match(jsonObject)) {
+            if (!operator.match(query)) {
                 return false;
             }
         }

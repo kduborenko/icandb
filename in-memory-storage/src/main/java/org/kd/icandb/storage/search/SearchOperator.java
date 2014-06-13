@@ -7,6 +7,6 @@ import java.util.Map;
  */
 public interface SearchOperator {
 
-    boolean match(Map<String, ?> jsonObject);
+    boolean match(Map<String, ?> query);
 
 }

@@ -22,9 +22,10 @@ import static org.kd.icandb.utils.MapUtils.get;
 public class InMemoryStorage implements ICanDB {
 
     private static final Log LOG = LogFactory.getLog(InMemoryStorage.class);
+    private static final String ID_KEY = "_id";
 
     private static final Map<String, ?> SELECT_ID = Collections.unmodifiableMap(new HashMap<String, Object>() {{
-        put("_id", 1);
+        put(ID_KEY, 1);
     }});
 
     private Map<String, Map<UUID, Map<String, ?>>> collections = new HashMap<String, Map<UUID, Map<String, ?>>>() {
@@ -33,16 +34,19 @@ public class InMemoryStorage implements ICanDB {
             Map<UUID, Map<String, ?>> collection = super.get(key);
             if (collection == null) {
                 super.put((String) key, collection = new HashMap<>());
+                indexes.put((String) key, new ArrayList<>(Arrays.asList(new ByIdIndex(collection))));
             }
             return collection;
         }
     };
 
+    private Map<String, List<Index>> indexes = new HashMap<>();
+
     @Override
     public String insert(String colName, Map<String, ?> obj) throws ICanDBException {
         Map<String, Object> o = new HashMap<>(obj);
-        String idString = get(o, "_id", String.class, UUID.randomUUID().toString());
-        o.put("_id", idString);
+        String idString = get(o, ID_KEY, String.class, UUID.randomUUID().toString());
+        o.put(ID_KEY, idString);
         Map<UUID, Map<String, ?>> collection = collections.get(colName);
         UUID id = UUID.fromString(idString);
         if (collection.containsKey(id)) {
@@ -54,12 +58,32 @@ public class InMemoryStorage implements ICanDB {
     }
 
     @Override
-    public List<Map<String, ?>> find(String collection, Map<String, ?> query, Map<String, ?> fields)
+    public List<Map<String, ?>> find(String colName, Map<String, ?> query, Map<String, ?> fields)
             throws ICanDBException {
-        return collections.get(collection).values().stream()
+        Collection<Map<String, ?>> collection = tryIndex(colName, query);
+        if (query.isEmpty()) {
+            return collection instanceof List
+                    ? (List<Map<String, ?>>) collection
+                    : new ArrayList<>(collection);
+        }
+        return collection.stream()
                 .filter(buildSearchOperator(query)::match)
                 .map(buildFieldsSelector(fields)::map)
                 .collect(Collectors.toList());
+    }
+
+    private Collection<Map<String, ?>> tryIndex(String collection, Map<String, ?> query) {
+        for (Index index : indexes.get(collection)) {
+            Map<String, ?> indexQuery = index.match(query);
+            if (indexQuery != null) {
+                List<Map<String, ?>> result = index.find(indexQuery);
+                if (result != null) {
+                    indexQuery.keySet().forEach(query::remove);
+                    return result;
+                }
+            }
+        }
+        return collections.get(collection).values();
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -71,7 +95,7 @@ public class InMemoryStorage implements ICanDB {
     public int update(String colName, Map<String, ?> query, Map<String, ?> obj) throws ICanDBException {
         return find(colName, query, SELECT_ID)
                 .stream()
-                .map((rs) -> get(rs, "_id", String.class))
+                .map((rs) -> get(rs, ID_KEY, String.class))
                 .map(updateById(colName, obj))
                 .reduce(0, Integer::sum);
     }
@@ -80,7 +104,7 @@ public class InMemoryStorage implements ICanDB {
         Map<String, Object> o = new HashMap<>(obj);
         return handleExceptions(
                 (id) -> {
-                    o.put("_id", id);
+                    o.put(ID_KEY, id);
                     collections.get(colName).put(UUID.fromString(id), o);
                     return 1;
                 },
@@ -93,7 +117,7 @@ public class InMemoryStorage implements ICanDB {
     public int delete(String colName, Map<String, ?> query) throws ICanDBException {
         return find(colName, query, SELECT_ID)
                 .stream()
-                .map((rs) -> get(rs, "_id", String.class))
+                .map((rs) -> get(rs, ID_KEY, String.class))
                 .map(deleteById(colName))
                 .reduce(0, Integer::sum);
     }
@@ -115,5 +139,46 @@ public class InMemoryStorage implements ICanDB {
                 return defaultValue;
             }
         };
+    }
+
+    private class ByIdIndex implements Index {
+
+        private Map<UUID, Map<String, ?>> collection;
+
+        public ByIdIndex(Map<UUID, Map<String, ?>> collection) {
+            this.collection = collection;
+        }
+
+        @Override
+        public Map<String, ?> match(Map<String, ?> fullQuery) {
+            if (fullQuery.containsKey(ID_KEY)) {
+                Map<String, Object> indexQuery = new HashMap<>();
+                indexQuery.put(ID_KEY, fullQuery.get(ID_KEY));
+                return indexQuery;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public List<Map<String, ?>> find(Map<String, ?> query) {
+            Object v = query.get(ID_KEY);
+            if (v instanceof Map) {
+                Map m = (Map) v;
+                if (m.containsKey("$in")) {
+                    Object ids = m.get("$in");
+                    if (ids instanceof List) {
+                        return ((List<String>) ids)
+                                .stream()
+                                .map(id -> collection.get(UUID.fromString(id)))
+                                .collect(Collectors.toList());
+                    }
+                }
+            } else {
+                return Arrays.asList(collection.get(UUID.fromString((String) v)));
+            }
+            return null;
+        }
     }
 }

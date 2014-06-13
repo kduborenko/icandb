@@ -13,9 +13,9 @@ public class OrOperator extends SpecialSearchOperator<List<SearchOperator>> {
     }
 
     @Override
-    public boolean match(Map<String, ?> jsonObject) {
+    public boolean match(Map<String, ?> query) {
         for (SearchOperator operator : getParams()) {
-            if (operator.match(jsonObject)) {
+            if (operator.match(query)) {
                 return true;
             }
         }
