@@ -69,4 +69,4 @@ I defined set of global goals to achieve and features to implement, but over tim
 
 * _Java 8_ - because I like Java, and just released Java 8 has lambdas, method references, and higher-order functions (features I waited so long, sometimes I will use them even where it is unnecessary, because I want to play with it)
 * _Gradle_ - this building tool is gaining popularity in Java projects, but I still not tried it yet
-* _Springframework_ - latest version I used was 3.0, now it is 4.0. I develops. Don't want to fall behind
+* _Springframework_ - latest version I used was 3.0, now it is 4.0. Don't want to fall behind
