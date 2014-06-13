@@ -6,13 +6,19 @@ dependencies {
 sourceSets {
     main {
         java {
-            srcDir 'build/generated-src/java'
+            srcDir 'src/generated/java'
         }
     }
 }
 
-task (generateSources) << {
-    def file = file('build/generated-src/java/org/kd/icandb/driver/ICanDBNetworkDriver.java')
+task (cleanGeneratedSources) << {
+    file('src/generated').deleteDir()
+}
+
+clean.dependsOn(cleanGeneratedSources)
+
+task (generateSources, dependsOn: 'cleanGeneratedSources') << {
+    def file = file('src/generated/java/org/kd/icandb/driver/ICanDBNetworkDriver.java')
     file.parentFile.mkdirs()
     file.createNewFile()
     def classLoader = new URLClassLoader(
