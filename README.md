@@ -30,7 +30,16 @@ To compile and start working with database you need to have installed JDK 8.
 
 Client shell is just a regular groovy shell with predefined set of objects and functions.
 
-_TBD: examples of usage_
+    groovy:000> db.insert("w", [name:'N1', age:26])
+    ===> 7003a1b3-4633-40e2-b9fe-2ca00a0b0f05
+    groovy:000> db.insert("w", [name:'N2', age:27])
+    ===> d90ffa96-d578-40fe-be56-8b785778d57b
+    groovy:000> db.insert("w", [name:'N3', age:27])
+    ===> 99c968b8-238b-42ea-acc2-851afedf08a4
+    groovy:000> db.insert("w", [name:'N4', age:28])
+    ===> 88cb6add-7635-447a-ae20-f517ed6b8112
+    groovy:000> db.find("w",[$or:[[name:'N2'],[age:28]]])
+    ===> [[name:N2, age:27, _id:d90ffa96-d578-40fe-be56-8b785778d57b], [name:N4, age:28, _id:88cb6add-7635-447a-ae20-f517ed6b8112]]
 
 ## Roadmap
 
