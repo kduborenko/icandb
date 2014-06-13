@@ -207,6 +207,25 @@ class ICanDBIntegrationTest {
         ], [_id: 1])*._id as Set);
     }
 
+    @Test
+    public void orConditionQuery() {
+        driver.insert 'users', [
+                name: 'Name1',
+                age: 27
+        ]
+        def id1 = driver.insert 'users', [
+                name: 'Name2',
+                age: 27
+        ]
+        def id2 = driver.insert 'users', [
+                name: 'Name3',
+                age: 26
+        ]
+        assertEquals([id1, id2] as Set, driver.find('users', [
+                $or: [[name: 'Name2'], [name: 'Name3']]
+        ], [_id: 1])*._id as Set);
+    }
+
     private static def json(Closure closure) {
         def builder = new JsonBuilder()
         builder closure
