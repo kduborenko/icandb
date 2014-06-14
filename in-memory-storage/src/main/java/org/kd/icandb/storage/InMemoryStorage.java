@@ -61,10 +61,21 @@ public class InMemoryStorage implements ICanDB {
     @Override
     public List<Map<String, ?>> find(String colName, Map<String, ?> query, Map<String, ?> fields)
             throws ICanDBException {
-        return withIndex(colName, query, (indexResult, scanQuery) -> indexResult.stream()
-                .filter(buildSearchOperator(scanQuery)::match)
-                .map(buildFieldsSelector(fields)::map)
-                .collect(Collectors.toList())
+        return withIndex(colName, query, (indexResult, scanQuery) -> {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(String.format("Search in collection '%s'...", colName));
+                        LOG.debug(String.format("Query: %s", scanQuery));
+                    }
+                    List<Map<String, ?>> result = indexResult.stream()
+                            .filter(buildSearchOperator(scanQuery)::match)
+                            .map(buildFieldsSelector(fields)::map)
+                            .collect(Collectors.toList());
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(String.format("Scanned %s object(s), found %s object(s).",
+                                indexResult.size(), result.size()));
+                    }
+                    return result;
+                }
         );
 
     }
@@ -76,6 +87,10 @@ public class InMemoryStorage implements ICanDB {
             if (indexQuery != null) {
                 List<Map<String, ?>> result = index.find(indexQuery);
                 if (result != null) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug(String.format("Search in index '%s', found %s object(s).", index, result.size()));
+                        LOG.debug(String.format("Index Query: %s", indexQuery));
+                    }
                     @SuppressWarnings("unchecked") Map<String, Object> scanQuery
                             = ((Map<String, Object>) query).entrySet()
                             .stream()
@@ -181,6 +196,11 @@ public class InMemoryStorage implements ICanDB {
                 return Arrays.asList(collection.get(UUID.fromString((String) v)));
             }
             return null;
+        }
+
+        @Override
+        public String toString() {
+            return "By ID index";
         }
     }
 }
