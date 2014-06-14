@@ -6,9 +6,7 @@ dependencies {
     compile project(':service')
     compile project(':in-memory-storage')
 
-    runtime group: 'log4j',
-            name: 'log4j',
-            version: '1.2.17'
+    runtime project(':logging')
 
     testCompile group: 'org.codehaus.groovy',
             name: 'groovy-all',

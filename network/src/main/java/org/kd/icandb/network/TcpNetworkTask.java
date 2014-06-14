@@ -12,6 +12,7 @@ import java.net.Socket;
  */
 public class TcpNetworkTask implements NetworkTask {
 
+    public static final ThreadLocal<Socket> SOCKET = new ThreadLocal<>();
     private static final Log LOG = LogFactory.getLog(TcpNetworkTask.class);
 
     private Socket socket;
@@ -25,12 +26,15 @@ public class TcpNetworkTask implements NetworkTask {
 
     @Override
     public void run() {
-        LOG.info("Connection established.");
         try {
+            SOCKET.set(socket);
+            LOG.info("Connection established.");
             protocol.handleInputStream(socket.getInputStream(), socket.getOutputStream());
         } catch (IOException e) {
             LOG.error("Error occurred during opening of input stream.", e);
+        } finally {
+            LOG.info("Connection closed.");
+            SOCKET.remove();
         }
-        LOG.info("Connection closed.");
     }
 }
