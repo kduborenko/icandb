@@ -7,6 +7,7 @@ import org.kd.icandb.ICanDB;
 import org.springframework.stereotype.Repository;
 
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -60,30 +61,31 @@ public class InMemoryStorage implements ICanDB {
     @Override
     public List<Map<String, ?>> find(String colName, Map<String, ?> query, Map<String, ?> fields)
             throws ICanDBException {
-        Collection<Map<String, ?>> collection = tryIndex(colName, query);
-        if (query.isEmpty()) {
-            return collection instanceof List
-                    ? (List<Map<String, ?>>) collection
-                    : new ArrayList<>(collection);
-        }
-        return collection.stream()
-                .filter(buildSearchOperator(query)::match)
+        return withIndex(colName, query, (indexResult, scanQuery) -> indexResult.stream()
+                .filter(buildSearchOperator(scanQuery)::match)
                 .map(buildFieldsSelector(fields)::map)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+        );
+
     }
 
-    private Collection<Map<String, ?>> tryIndex(String collection, Map<String, ?> query) {
-        for (Index index : indexes.get(collection)) {
+    private List<Map<String, ?>> withIndex(String colName, Map<String, ?> query,
+            BiFunction<Collection<Map<String, ?>>, Map<String, ?> , List<Map<String, ?>>> callback) {
+        for (Index index : indexes.get(colName)) {
             Map<String, ?> indexQuery = index.match(query);
             if (indexQuery != null) {
                 List<Map<String, ?>> result = index.find(indexQuery);
                 if (result != null) {
-                    indexQuery.keySet().forEach(query::remove);
-                    return result;
+                    @SuppressWarnings("unchecked") Map<String, Object> scanQuery
+                            = ((Map<String, Object>) query).entrySet()
+                            .stream()
+                            .filter(e -> !indexQuery.containsKey(e.getKey()))
+                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                    return callback.apply(result, scanQuery);
                 }
             }
         }
-        return collections.get(collection).values();
+        return callback.apply(collections.get(colName).values(), query);
     }
 
     @SuppressWarnings("UnusedDeclaration")
