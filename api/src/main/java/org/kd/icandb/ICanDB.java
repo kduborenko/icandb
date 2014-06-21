@@ -39,4 +39,20 @@ public interface ICanDB {
     int delete(
             @ReqParam(PARAM_COLLECTION) String collection,
             @ReqParam(PARAM_QUERY) Map<String, ?> query) throws ICanDBException;
+
+    Map<String, ?> explain(
+            @ReqParam(PARAM_COLLECTION) String collection,
+            @ReqParam(PARAM_QUERY) Map<String, ?> query,
+            @ReqParam(PARAM_FIELDS) Map<String, ?> fields) throws ICanDBException;
+
+    default Map<String, ?> explain(
+            @ReqParam(PARAM_COLLECTION) String collection,
+            @ReqParam(PARAM_QUERY) Map<String, ?> query) throws ICanDBException {
+        return explain(collection, query, null);
+    }
+
+    default Map<String, ?> explain(
+            @ReqParam(PARAM_COLLECTION) String collection) throws ICanDBException {
+        return explain(collection, new HashMap<>());
+    }
 }

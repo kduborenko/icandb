@@ -19,4 +19,6 @@ public interface DBCollection {
     Collection<Map<String,?>> values();
 
     Map<String, ?> remove(UUID id);
+
+    int size();
 }

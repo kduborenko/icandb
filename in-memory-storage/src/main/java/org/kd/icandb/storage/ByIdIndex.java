@@ -47,6 +47,16 @@ public class ByIdIndex implements Index {
     }
 
     @Override
+    public String getName() {
+        return toString();
+    }
+
+    @Override
+    public int size() {
+        return collection.size();
+    }
+
+    @Override
     public String toString() {
         return "By ID index";
     }

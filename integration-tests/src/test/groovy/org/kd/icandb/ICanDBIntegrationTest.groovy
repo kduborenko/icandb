@@ -226,6 +226,35 @@ class ICanDBIntegrationTest {
         ], [_id: 1])*._id as Set);
     }
 
+    @Test
+    public void byIdIndex() {
+        driver.insert 'users', [
+                name: 'Name1',
+                age: 27
+        ]
+        def id = driver.insert 'users', [
+                name: 'Name2',
+                age: 27
+        ]
+        driver.insert 'users', [
+                name: 'Name3',
+                age: 26
+        ]
+        println driver.explain('users', [_id: id])
+        assertEquals(
+                [
+                        itemsInCollection: 3,
+                        indexName        : "By ID index",
+                        indexSize        : 3,
+                        indexQuery       : [_id: id],
+                        scanQuery        : [:],
+                        scannedItems     : 1,
+                        foundItems       : 1
+                ],
+                driver.explain('users', [_id: id])
+        );
+    }
+
     private static def json(Closure closure) {
         def builder = new JsonBuilder()
         builder closure

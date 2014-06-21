@@ -40,4 +40,9 @@ public class InMemoryCollection implements DBCollection {
     public Map<String, ?> remove(UUID id) {
         return objects.remove(id);
     }
+
+    @Override
+    public int size() {
+        return objects.size();
+    }
 }

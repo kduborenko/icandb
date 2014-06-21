@@ -12,4 +12,7 @@ public interface Index {
 
     List<Map<String, ?>> find(Map<String, ?> query);
 
+    String getName();
+
+    int size();
 }

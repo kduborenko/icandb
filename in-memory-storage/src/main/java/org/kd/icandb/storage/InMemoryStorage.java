@@ -28,6 +28,8 @@ public class InMemoryStorage implements ICanDB {
         put(DBCollection.ID_KEY, 1);
     }});
 
+    private final ThreadLocal<Map<String, Object>> explainPlan = new ThreadLocal<>();
+
     private Map<String, DBCollection> collections = new HashMap<String, DBCollection>() {
         @Override
         public DBCollection get(Object key) {
@@ -66,6 +68,12 @@ public class InMemoryStorage implements ICanDB {
                             .filter(buildSearchOperator(scanQuery)::match)
                             .map(buildFieldsSelector(fields)::map)
                             .collect(Collectors.toList());
+                    Map<String, Object> explainPlan = this.explainPlan.get();
+                    if (explainPlan != null) {
+                        explainPlan.put("scanQuery", scanQuery);
+                        explainPlan.put("scannedItems", indexResult.size());
+                        explainPlan.put("foundItems", result.size());
+                    }
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("Scanned %s object(s), found %s object(s).",
                                 indexResult.size(), result.size()));
@@ -78,10 +86,20 @@ public class InMemoryStorage implements ICanDB {
 
     private List<Map<String, ?>> withIndex(String colName, Map<String, ?> query,
             BiFunction<Collection<Map<String, ?>>, Map<String, ?> , List<Map<String, ?>>> callback) {
-        for (Index index : collections.get(colName).getIndexes()) {
+        DBCollection collection = collections.get(colName);
+        Map<String, Object> explainPlan = this.explainPlan.get();
+        if (explainPlan != null) {
+            explainPlan.put("itemsInCollection", collection.size());
+        }
+        for (Index index : collection.getIndexes()) {
             Map<String, ?> indexQuery = index.match(query);
             if (indexQuery != null) {
                 List<Map<String, ?>> result = index.find(indexQuery);
+                if (explainPlan != null) {
+                    explainPlan.put("indexName", index.getName());
+                    explainPlan.put("indexSize", index.size());
+                    explainPlan.put("indexQuery", indexQuery);
+                }
                 if (result != null) {
                     if (LOG.isDebugEnabled()) {
                         LOG.debug(String.format("Search in index '%s', found %s object(s).", index, result.size()));
@@ -96,7 +114,7 @@ public class InMemoryStorage implements ICanDB {
                 }
             }
         }
-        return callback.apply(collections.get(colName).values(), query);
+        return callback.apply(collection.values(), query);
     }
 
     @SuppressWarnings("UnusedDeclaration")
@@ -152,6 +170,18 @@ public class InMemoryStorage implements ICanDB {
                 return defaultValue;
             }
         };
+    }
+
+    @Override
+    public Map<String, ?> explain(String collection, Map<String, ?> query, Map<String, ?> fields)
+            throws ICanDBException {
+        try {
+            explainPlan.set(new LinkedHashMap<>());
+            find(collection, query, fields);
+            return explainPlan.get();
+        } finally {
+            explainPlan.remove();
+        }
     }
 
 }
