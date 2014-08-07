@@ -1,6 +1,10 @@
 package org.kd.icandb.fs;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 
 /**
@@ -45,7 +49,13 @@ class BTreeFileRef<T> {
             boolean active = file.readBoolean();
             byte[] data = new byte[(int) length];
             file.read(data);
-            value = (T) new String(data);
+            ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(data));
+            try {
+                //noinspection unchecked
+                value = (T) is.readObject();
+            } catch (ClassNotFoundException e) {
+                throw new IOException(e);
+            }
         }
         return value;
     }
@@ -53,7 +63,10 @@ class BTreeFileRef<T> {
     public long write(long address) throws IOException {
         this.address = address;
         file.seek(address);
-        byte[] data = value.toString().getBytes();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ObjectOutputStream os = new ObjectOutputStream(baos);
+        os.writeObject(value);
+        byte[] data = baos.toByteArray();
         file.writeLong(data.length);
         file.writeBoolean(true);
         file.write(data);
