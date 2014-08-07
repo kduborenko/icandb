@@ -11,7 +11,7 @@ import static org.kd.icandb.utils.MapUtils.get;
 import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Component("insert")
 public class InsertOperation extends StorageOperation<String> {

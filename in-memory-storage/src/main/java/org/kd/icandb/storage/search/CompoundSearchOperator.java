@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class CompoundSearchOperator implements SearchOperator {
 

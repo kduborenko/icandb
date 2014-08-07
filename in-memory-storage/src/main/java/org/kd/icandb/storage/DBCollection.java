@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public interface DBCollection {
     String ID_KEY = "_id";

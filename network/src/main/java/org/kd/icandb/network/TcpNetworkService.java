@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Service
 public class TcpNetworkService implements NetworkService {

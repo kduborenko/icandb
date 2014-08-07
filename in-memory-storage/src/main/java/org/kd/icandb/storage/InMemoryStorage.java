@@ -17,7 +17,7 @@ import static org.kd.icandb.storage.SearchUtils.buildSearchOperator;
 import static org.kd.icandb.utils.MapUtils.get;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Repository
 public class InMemoryStorage implements ICanDB {

@@ -9,7 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public final class ICanDBDriver {
 

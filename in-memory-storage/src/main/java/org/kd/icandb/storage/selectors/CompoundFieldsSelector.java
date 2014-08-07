@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class CompoundFieldsSelector implements FieldsSelector {
 

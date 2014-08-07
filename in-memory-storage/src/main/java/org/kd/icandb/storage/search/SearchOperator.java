@@ -3,7 +3,7 @@ package org.kd.icandb.storage.search;
 import java.util.Map;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public interface SearchOperator {
 

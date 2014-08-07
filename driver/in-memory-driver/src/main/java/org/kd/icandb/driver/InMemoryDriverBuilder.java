@@ -6,7 +6,7 @@ import org.kd.icandb.ICanDBDriverBuilder;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class InMemoryDriverBuilder implements ICanDBDriverBuilder {
 

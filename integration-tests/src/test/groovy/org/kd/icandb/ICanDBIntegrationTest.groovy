@@ -12,7 +12,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import static org.junit.Assert.assertEquals
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 class ICanDBIntegrationTest {
 

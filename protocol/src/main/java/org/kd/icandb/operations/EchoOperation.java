@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Component("echo")
 public class EchoOperation implements Operation<Map<String, ?>> {

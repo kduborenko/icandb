@@ -3,7 +3,7 @@ package org.kd.icandb.storage;
 import java.util.*;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class InMemoryCollection implements DBCollection {
 

@@ -1,7 +1,7 @@
 package org.kd.icandb.storage.search;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public abstract class SpecialSearchOperator<T> implements SearchOperator {
 

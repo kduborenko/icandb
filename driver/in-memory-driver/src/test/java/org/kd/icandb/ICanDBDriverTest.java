@@ -10,7 +10,7 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class ICanDBDriverTest {
 

@@ -4,7 +4,7 @@ import org.kd.icandb.ICanDB;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public abstract class StorageOperation<T> implements Operation<T> {
 

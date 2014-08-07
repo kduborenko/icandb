@@ -10,7 +10,7 @@ import static org.kd.icandb.utils.MapUtils.get;
 import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Component("update")
 public class UpdateOperation extends StorageOperation<Integer> {

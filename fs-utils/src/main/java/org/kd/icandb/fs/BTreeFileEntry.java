@@ -6,7 +6,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 class BTreeFileEntry<T extends Comparable<T>> {
 

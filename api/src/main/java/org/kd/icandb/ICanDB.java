@@ -7,7 +7,7 @@ import java.util.Map;
 import static org.kd.icandb.ICanDBConstants.*;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public interface ICanDB {
 

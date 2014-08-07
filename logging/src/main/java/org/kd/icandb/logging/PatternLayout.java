@@ -8,7 +8,7 @@ import org.kd.icandb.network.TcpNetworkTask;
 import java.net.Socket;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class PatternLayout extends org.apache.log4j.PatternLayout {
 

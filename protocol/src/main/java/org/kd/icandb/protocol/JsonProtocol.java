@@ -15,7 +15,7 @@ import java.util.Map;
 import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Component
 public class JsonProtocol implements Protocol {

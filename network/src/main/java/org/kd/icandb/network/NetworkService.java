@@ -3,7 +3,7 @@ package org.kd.icandb.network;
 import org.kd.icandb.ICanDBException;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public interface NetworkService {
     void start() throws ICanDBException;

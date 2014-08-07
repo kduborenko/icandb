@@ -10,7 +10,7 @@ import static org.kd.icandb.utils.MapUtils.get;
 import static org.kd.icandb.utils.MapUtils.getMap;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Component("explain")
 public class ExplainOperation extends StorageOperation<Map<String, ?>> {

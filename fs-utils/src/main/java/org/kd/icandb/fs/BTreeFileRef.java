@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 class BTreeFileRef<T> {
 

@@ -6,7 +6,7 @@ import org.codehaus.groovy.tools.shell.util.Logger
 import org.codehaus.groovy.tools.shell.util.NoExitSecurityManager
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 class ICanDBShell {
 

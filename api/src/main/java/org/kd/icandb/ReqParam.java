@@ -3,7 +3,7 @@ package org.kd.icandb;
 import java.lang.annotation.*;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)

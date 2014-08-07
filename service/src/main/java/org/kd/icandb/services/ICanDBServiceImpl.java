@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 @Service
 public class ICanDBServiceImpl implements ICanDBService {

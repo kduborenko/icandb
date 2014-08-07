@@ -1,7 +1,7 @@
 package org.kd.icandb;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public interface ICanDBDriverBuilder {
 

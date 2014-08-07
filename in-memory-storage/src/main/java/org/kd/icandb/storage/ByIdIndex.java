@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
-* @author kirk
+* @author Kiryl Dubarenka
 */
 public class ByIdIndex implements Index {
 

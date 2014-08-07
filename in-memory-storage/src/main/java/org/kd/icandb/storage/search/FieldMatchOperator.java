@@ -4,7 +4,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class FieldMatchOperator implements SearchOperator {
 

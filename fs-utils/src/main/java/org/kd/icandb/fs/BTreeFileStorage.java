@@ -5,7 +5,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>, Closeable {
 

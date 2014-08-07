@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class TcpNetworkTask implements NetworkTask {
 

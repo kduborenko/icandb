@@ -14,7 +14,7 @@ import java.util.Map;
 import static org.kd.icandb.utils.MapUtils.get;
 
 /**
- * @author kirk
+ * @author Kiryl Dubarenka
  */
 public class NetworkDriver implements AutoCloseable {
 
