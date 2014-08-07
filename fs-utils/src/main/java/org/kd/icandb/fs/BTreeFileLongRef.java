@@ -19,6 +19,6 @@ class BTreeFileLongRef extends BTreeFileRef<Long> {
 
     @Override
     public long write(long address) throws IOException {
-        return -9;
+        return -9; // todo fix this hack
     }
 }
