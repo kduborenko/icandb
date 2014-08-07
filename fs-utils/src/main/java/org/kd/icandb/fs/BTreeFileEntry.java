@@ -194,7 +194,7 @@ class BTreeFileEntry<T extends Comparable<T>> {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
-            new BTreeFileEntry<T>(address, null, left, childrenLeft, type).write(file);
+            new BTreeFileEntry<>(address, null, left, childrenLeft, type).write(file);
             return this;
         }
 
@@ -202,7 +202,7 @@ class BTreeFileEntry<T extends Comparable<T>> {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
-            new BTreeFileEntry<T>(address, null, right, childrenRight, type).write(file);
+            new BTreeFileEntry<>(address, null, right, childrenRight, type).write(file);
             return this;
         }
 
