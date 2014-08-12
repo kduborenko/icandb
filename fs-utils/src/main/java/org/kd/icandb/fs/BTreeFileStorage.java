@@ -31,8 +31,8 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         set(BTreeFileHeader.B_TREE_DATA_SIZE, BTreeFileHeader.SIZE);
     }
 
-    public static <K extends Comparable<K>, V> BTreeFileStorage create(File file, int order, int contentOffset) throws IOException {
-        return new BTreeFileStorage<K, V>(file, order, contentOffset);
+    public static <K extends Comparable<K>, V> BTreeFileStorage<K, V> create(File file, int order, int contentOffset) throws IOException {
+        return new BTreeFileStorage<>(file, order, contentOffset);
     }
 
     private <VT> void set(BTreeFileHeader<VT> header, VT value) {
