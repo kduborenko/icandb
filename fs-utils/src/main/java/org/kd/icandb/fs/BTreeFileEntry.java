@@ -8,28 +8,26 @@ import java.util.Arrays;
 /**
  * @author Kiryl Dubarenka
  */
-class BTreeFileEntry<T extends Comparable<T>> {
+class BTreeFileEntry<K extends Comparable<K>, V> {
 
-    private final BTreeFileEntry<T> parent;
+    private final BTreeFileEntry<K, V> parent;
     private final long address;
-    private final BTreeFileRef<T>[] values;
+    private final BTreeFileRef<K, V>[] values;
     private final long[] children;
-    private final Class<T> type;
 
-    public BTreeFileEntry(long address, BTreeFileEntry<T> parent, BTreeFileRef<T>[] values, long[] children, Class<T> type) {
+    public BTreeFileEntry(long address, BTreeFileEntry<K, V> parent, BTreeFileRef<K, V>[] values, long[] children) {
         assert values.length + 1 == children.length;
         this.parent = parent;
         this.address = address;
         this.values = values;
         this.children = children;
-        this.type = type;
     }
 
     public void write(RandomAccessFile file) throws IOException {
         file.seek(address);
         ByteBuffer bb = ByteBuffer.allocate(getBinaryDataSize(values.length));
         bb.putLong(0L); //todo remove
-        for (BTreeFileRef<T> value : values) {
+        for (BTreeFileRef<K, V> value : values) {
             bb.putLong(value == null ? 0 : value.getAddress());
         }
         for (long child : children) {
@@ -42,27 +40,27 @@ class BTreeFileEntry<T extends Comparable<T>> {
         return 8 * (2 * order + 1) + 8;
     }
 
-    public static <T extends Comparable<T>> BTreeFileEntry<T> read(RandomAccessFile file, Class<T> type,
-                                                                long offset, int order, BTreeFileEntry<T> parent) throws IOException {
+    public static <K extends Comparable<K>, V> BTreeFileEntry<K, V> read(RandomAccessFile file,
+                                                                long offset, int order, BTreeFileEntry<K, V> parent) throws IOException {
         file.seek(offset);
         byte[] buffer = new byte[getBinaryDataSize(order)];
         file.read(buffer);
         ByteBuffer bb = ByteBuffer.wrap(buffer);
         bb.getLong(); // todo remove read "parent"
-        @SuppressWarnings("unchecked") BTreeFileRef<T>[] values = new BTreeFileRef[order];
+        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] values = new BTreeFileRef[order];
         for (int i = 0; i < values.length; i++) {
             long address = bb.getLong();
-            values[i] = address == 0 ? null : BTreeFileRef.forAddress(file, address, type);
+            values[i] = address == 0 ? null : BTreeFileRef.forAddress(file, address);
         }
         @SuppressWarnings("unchecked") long[] children = new long[order + 1];
         for (int i = 0; i < children.length; i++) {
             children[i] = bb.getLong();
         }
-        return new BTreeFileEntry<>(offset, parent, values, children, type);
+        return new BTreeFileEntry<>(offset, parent, values, children);
     }
 
-    public void add(BTreeFileRef<T> t, long rightChild) throws IOException {
-        int position = findPosition(t.get());
+    public void add(BTreeFileRef<K, V> t, long rightChild) throws IOException {
+        int position = findPosition(t.getKey());
         System.arraycopy(values, position, values, position + 1, values.length - position - 1);
         values[position] = t;
         if (!isLeaf()) {
@@ -71,13 +69,13 @@ class BTreeFileEntry<T extends Comparable<T>> {
         }
     }
 
-    public EntrySplitter splitEntry(BTreeFileRef<T> newItem, long rightChild) throws IOException {
+    public EntrySplitter splitEntry(BTreeFileRef<K, V> newItem, long rightChild) throws IOException {
         int order = values.length;
         int medianPosition = (order + 1) / 2;
-        int pos = findPosition(newItem.get());
-        BTreeFileRef<T> median;
-        @SuppressWarnings("unchecked") BTreeFileRef<T>[] left = new BTreeFileRef[order];
-        @SuppressWarnings("unchecked") BTreeFileRef<T>[] right = new BTreeFileRef[order];
+        int pos = findPosition(newItem.getKey());
+        BTreeFileRef<K, V> median;
+        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] left = new BTreeFileRef[order];
+        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] right = new BTreeFileRef[order];
         long[] childrenLeft = new long[order + 1];
         long[] childrenRight = new long[order + 1];
         if (pos == medianPosition) {
@@ -129,18 +127,18 @@ class BTreeFileEntry<T extends Comparable<T>> {
         return values.length == size();
     }
 
-    public int findPosition(T t) throws IOException {
+    public int findPosition(K key) throws IOException {
         // todo binary search
         for (int i = 0; i < values.length; i++) {
-            BTreeFileRef<T> v = values[i];
-            if (v == null || v.get().compareTo(t) > 0) {
+            BTreeFileRef<K, V> v = values[i];
+            if (v == null || v.getKey().compareTo(key) > 0) {
                 return i;
             }
         }
         return values.length;
     }
 
-    public BTreeFileRef<T> getValue(int pos) {
+    public BTreeFileRef<K, V> getValue(int pos) {
         return values[pos];
     }
 
@@ -148,7 +146,7 @@ class BTreeFileEntry<T extends Comparable<T>> {
         return address;
     }
 
-    public BTreeFileEntry<T> getParent() {
+    public BTreeFileEntry<K, V> getParent() {
         return parent;
     }
 
@@ -156,8 +154,8 @@ class BTreeFileEntry<T extends Comparable<T>> {
         return this.children[0] == 0L;
     }
 
-    public BTreeFileEntry<T> resolveChild(RandomAccessFile file, int position) throws IOException {
-        return read(file, type, children[position], this.values.length, this);
+    public BTreeFileEntry<K, V> resolveChild(RandomAccessFile file, int position) throws IOException {
+        return read(file, children[position], this.values.length, this);
     }
 
     public int getDepth() {
@@ -166,15 +164,15 @@ class BTreeFileEntry<T extends Comparable<T>> {
 
     public class EntrySplitter {
 
-        private final BTreeFileRef<T>[] left;
-        private final BTreeFileRef<T>[] right;
+        private final BTreeFileRef<K, V>[] left;
+        private final BTreeFileRef<K, V>[] right;
         private final long[] childrenLeft;
         private final long[] childrenRight;
-        private final BTreeFileRef<T> median;
+        private final BTreeFileRef<K, V> median;
 
         private RandomAccessFile file;
 
-        public EntrySplitter(BTreeFileRef<T>[] left, BTreeFileRef<T>[] right, long[] childrenLeft, long[] childrenRight, BTreeFileRef<T> median) {
+        public EntrySplitter(BTreeFileRef<K, V>[] left, BTreeFileRef<K, V>[] right, long[] childrenLeft, long[] childrenRight, BTreeFileRef<K, V> median) {
             this.left = left;
             this.right = right;
             this.childrenLeft = childrenLeft;
@@ -194,7 +192,7 @@ class BTreeFileEntry<T extends Comparable<T>> {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
-            new BTreeFileEntry<>(address, null, left, childrenLeft, type).write(file);
+            new BTreeFileEntry<>(address, null, left, childrenLeft).write(file);
             return this;
         }
 
@@ -202,11 +200,11 @@ class BTreeFileEntry<T extends Comparable<T>> {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
-            new BTreeFileEntry<>(address, null, right, childrenRight, type).write(file);
+            new BTreeFileEntry<>(address, null, right, childrenRight).write(file);
             return this;
         }
 
-        public BTreeFileRef<T> getMedian() {
+        public BTreeFileRef<K, V> getMedian() {
             return median;
         }
     }

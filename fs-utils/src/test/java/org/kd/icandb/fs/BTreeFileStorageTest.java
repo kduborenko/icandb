@@ -1,5 +1,6 @@
 package org.kd.icandb.fs;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -22,7 +23,7 @@ public class BTreeFileStorageTest {
     public void testFileCreation() throws IOException {
         File file = File.createTempFile("test", "tmp");
         //noinspection EmptyTryBlock,UnusedDeclaration
-        try (BTreeFileStorage<String> bTreeFileStorage = BTreeFileStorage.create(file, String.class, 4, 1024)) {
+        try (BTreeFileStorage<String, Void> bTreeFileStorage = BTreeFileStorage.create(file, 4, 1024)) {
             // do nothing
         }
         InputStream is = new FileInputStream(file);
@@ -42,8 +43,8 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddOneItem() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(123L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(123L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -59,9 +60,9 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddTwoItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(124L));
-            assertTrue(storage.add(123L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(124L, null));
+            assertNull(storage.put(123L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -77,10 +78,10 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddThreeItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(124L));
-            assertTrue(storage.add(122L));
-            assertTrue(storage.add(123L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(124L, null));
+            assertNull(storage.put(122L, null));
+            assertNull(storage.put(123L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -96,12 +97,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast1() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(2L));
-            assertTrue(storage.add(3L));
-            assertTrue(storage.add(4L));
-            assertTrue(storage.add(5L));
-            assertTrue(storage.add(1L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(2L, null));
+            assertNull(storage.put(3L, null));
+            assertNull(storage.put(4L, null));
+            assertNull(storage.put(5L, null));
+            assertNull(storage.put(1L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -119,12 +120,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast2() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(1L));
-            assertTrue(storage.add(3L));
-            assertTrue(storage.add(4L));
-            assertTrue(storage.add(5L));
-            assertTrue(storage.add(2L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(1L, null));
+            assertNull(storage.put(3L, null));
+            assertNull(storage.put(4L, null));
+            assertNull(storage.put(5L, null));
+            assertNull(storage.put(2L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -142,12 +143,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast3() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(1L));
-            assertTrue(storage.add(2L));
-            assertTrue(storage.add(4L));
-            assertTrue(storage.add(5L));
-            assertTrue(storage.add(3L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(1L, null));
+            assertNull(storage.put(2L, null));
+            assertNull(storage.put(4L, null));
+            assertNull(storage.put(5L, null));
+            assertNull(storage.put(3L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -165,12 +166,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast4() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(1L));
-            assertTrue(storage.add(2L));
-            assertTrue(storage.add(3L));
-            assertTrue(storage.add(5L));
-            assertTrue(storage.add(4L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(1L, null));
+            assertNull(storage.put(2L, null));
+            assertNull(storage.put(3L, null));
+            assertNull(storage.put(5L, null));
+            assertNull(storage.put(4L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -188,12 +189,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast5() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            assertTrue(storage.add(1L));
-            assertTrue(storage.add(2L));
-            assertTrue(storage.add(3L));
-            assertTrue(storage.add(4L));
-            assertTrue(storage.add(5L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            assertNull(storage.put(1L, null));
+            assertNull(storage.put(2L, null));
+            assertNull(storage.put(3L, null));
+            assertNull(storage.put(4L, null));
+            assertNull(storage.put(5L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -211,12 +212,12 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder2AddFiveItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 2, 1024)) {
-            assertTrue(storage.add(1L));
-            assertTrue(storage.add(2L));
-            assertTrue(storage.add(3L));
-            assertTrue(storage.add(4L));
-            assertTrue(storage.add(5L));
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
+            assertNull(storage.put(1L, null));
+            assertNull(storage.put(2L, null));
+            assertNull(storage.put(3L, null));
+            assertNull(storage.put(4L, null));
+            assertNull(storage.put(5L, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -235,8 +236,8 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder2AddSevenItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 2, 1024)) {
-            LongStream.rangeClosed(1, 7).forEach(storage::add);
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
+            LongStream.rangeClosed(1, 7).forEach(i -> storage.put(i, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -258,8 +259,8 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddSeventeenItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 4, 1024)) {
-            LongStream.rangeClosed(1, 17).forEach(storage::add);
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+            LongStream.rangeClosed(1, 17).forEach(i -> storage.put(i, null));
         }
         InputStream is = new FileInputStream(file);
         byte[] buffer = new byte[1024];
@@ -280,18 +281,19 @@ public class BTreeFileStorageTest {
         file.deleteOnExit();
     }
 
+    @Ignore("Turn on after serializers are implemented.")
     @Test
     public void testIterator() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
-        try (BTreeFileStorage<Long> storage = BTreeFileStorage.create(file, Long.class, 10, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024)) {
             List<Long> elements = LongStream.rangeClosed(1, 500).collect(ArrayList::new,
                     (list, e) -> list.add(0, e),
                     (l1, l2) -> l1.addAll(0, l2));
             Collections.shuffle(elements);
-            elements.forEach(storage::add);
+            elements.forEach(i -> storage.put(i, null));
             Iterator<Long> expected = elements.stream().sorted().iterator();
-            Iterator<Long> actual = storage.iterator();
+            Iterator<Long> actual = storage.keySet().iterator();
             while (expected.hasNext()) {
                 assertTrue(actual.hasNext());
                 assertEquals(expected.next(), actual.next());
@@ -303,7 +305,7 @@ public class BTreeFileStorageTest {
     public void testStringReferences() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
-        try (BTreeFileStorage<String> storage = BTreeFileStorage.create(file, String.class, 2, 1024)) {
+        try (BTreeFileStorage<String, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
             List<String> elements = LongStream.rangeClosed(1, 10)
                     .boxed()
                     .map(String::valueOf)
@@ -311,9 +313,9 @@ public class BTreeFileStorageTest {
                             (list, e) -> list.add(0, e),
                             (l1, l2) -> l1.addAll(0, l2));
             Collections.shuffle(elements);
-            elements.forEach(storage::add);
+            elements.forEach(i -> storage.put(i, null));
             Iterator<String> expected = elements.stream().sorted().iterator();
-            Iterator<String> actual = storage.iterator();
+            Iterator<String> actual = storage.keySet().iterator();
             while (expected.hasNext()) {
                 assertTrue(actual.hasNext());
                 assertEquals(expected.next(), actual.next());

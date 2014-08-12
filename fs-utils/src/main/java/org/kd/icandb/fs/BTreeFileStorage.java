@@ -4,22 +4,22 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.Collection;
+import java.util.AbstractMap;
+import java.util.AbstractSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.Stack;
 import java.util.stream.IntStream;
 
 /**
  * @author Kiryl Dubarenka
  */
-public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>, Closeable {
+public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K, V> implements Closeable {
 
     private final int order;
     private final RandomAccessFile file;
-    private final Class<T> type;
 
-    private BTreeFileStorage(File file, Class<T> type, int order, long contentOffset) throws IOException {
-        this.type = type;
+    private BTreeFileStorage(File file, int order, long contentOffset) throws IOException {
         this.order = order;
         if (!file.exists()) {
             file.createNewFile();
@@ -31,8 +31,8 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
         set(BTreeFileHeader.B_TREE_DATA_SIZE, BTreeFileHeader.SIZE);
     }
 
-    public static <T extends Comparable<T>> BTreeFileStorage<T> create(File file, Class<T> type, int order, int contentOffset) throws IOException {
-        return new BTreeFileStorage<>(file, type, order, contentOffset);
+    public static <K extends Comparable<K>, V> BTreeFileStorage create(File file, int order, int contentOffset) throws IOException {
+        return new BTreeFileStorage<K, V>(file, order, contentOffset);
     }
 
     private <VT> void set(BTreeFileHeader<VT> header, VT value) {
@@ -61,62 +61,50 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
-    @Override
-    public boolean contains(Object o) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    @Override
-    public Iterator<T> iterator() {
+    /*@Override
+    public Iterator<K, V> iterator() {
         try {
             return new BTreeFileStorageIterator();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
     @Override
-    public Object[] toArray() {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    @Override
-    public <E> E[] toArray(E[] a) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
-
-    @Override
-    public boolean add(T t) {
+    public V put(K key, V value) {
         try {
-            BTreeFileEntry<T> entry = findLeaf(readRootEntry(), t);
-            BTreeFileRef<T> ref = BTreeFileRef.forValue(file, t);
+            BTreeFileEntry<K, V> entry = findLeaf(readRootEntry(), key);
+            BTreeFileRef<K, V> ref = BTreeFileRef.forValue(file, key, value);
             storeRef(ref);
-            addToEntry(ref, entry, 0, 0);
-            return true;
+            return addToEntry(ref, entry, 0, 0);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void storeRef(BTreeFileRef<T> ref) throws IOException {
+    private void storeRef(BTreeFileRef<K, V> ref) throws IOException {
+        if (ref.getKey() instanceof Long) { //todo implement with serializers
+            ref.setAddress((Long) ref.getKey());
+            return;
+        }
         Long address = get(BTreeFileHeader.CONTENT_OFFSET);
         long size = ref.write(address);
         set(BTreeFileHeader.CONTENT_OFFSET, address + size + 9);
     }
 
-    private BTreeFileEntry<T> findLeaf(BTreeFileEntry<T> entry, T t) throws IOException {
+    private BTreeFileEntry<K, V> findLeaf(BTreeFileEntry<K, V> entry, K key) throws IOException {
         if (entry == null) {
             return null;
         }
         if (entry.isLeaf()) {
             return entry;
         }
-        return findLeaf(entry.resolveChild(file, entry.findPosition(t)), t);
+        return findLeaf(entry.resolveChild(file, entry.findPosition(key)), key);
     }
 
-    private void addToEntry(BTreeFileRef<T> t, BTreeFileEntry<T> entry, long leftChild, long rightChild) throws IOException {
+    private V addToEntry(BTreeFileRef<K, V> t, BTreeFileEntry<K, V> entry, long leftChild, long rightChild) throws IOException {
         if (entry == null) {
-            @SuppressWarnings("unchecked") BTreeFileRef<T>[] values = new BTreeFileRef[order];
+            @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] values = new BTreeFileRef[order];
             values[0] = t;
             Long newAddress = get(BTreeFileHeader.B_TREE_DATA_SIZE);
             long[] children = new long[order + 1];
@@ -125,57 +113,83 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
             createEntry(newAddress, values, children);
             set(BTreeFileHeader.ROOT_ADDRESS, newAddress);
             set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileEntry.getBinaryDataSize(order));
+            return null;
         } else {
             if (!entry.isFull()) {
                 entry.add(t, rightChild);
                 entry.write(file);
+                return null; // todo return actual value
             } else {
                 long newAddress = get(BTreeFileHeader.B_TREE_DATA_SIZE);
                 set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileEntry.getBinaryDataSize(order));
-                BTreeFileRef<T> median = entry.splitEntry(t, rightChild)
+                BTreeFileRef<K, V> median = entry.splitEntry(t, rightChild)
                         .setOutputFile(file)
                         .createLeftEntry(entry.getAddress())
                         .createRightEntry(newAddress)
                         .getMedian();
-                addToEntry(median, entry.getParent(), entry.getAddress(), newAddress);
+                return addToEntry(median, entry.getParent(), entry.getAddress(), newAddress);
             }
         }
     }
 
-    private BTreeFileEntry<T> readRootEntry() throws IOException {
+    private BTreeFileEntry<K, V> readRootEntry() throws IOException {
         long address = get(BTreeFileHeader.ROOT_ADDRESS);
-        return address == 0 ? null : BTreeFileEntry.read(file, type, address, order, null);
+        return address == 0 ? null : BTreeFileEntry.read(file, address, order, null);
     }
 
-    private BTreeFileEntry<T> createEntry(long offset, BTreeFileRef<T>[] values, long[] children) throws IOException {
-        BTreeFileEntry<T> entry = new BTreeFileEntry<>(offset, null, values, children, type);
+    private BTreeFileEntry<K, V> createEntry(long offset, BTreeFileRef<K, V>[] values, long[] children) throws IOException {
+        BTreeFileEntry<K, V> entry = new BTreeFileEntry<>(offset, null, values, children);
         entry.write(file);
         return entry;
     }
 
     @Override
-    public boolean remove(Object o) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public boolean containsKey(Object key) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean containsAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public V get(Object key) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean addAll(Collection<? extends T> c) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public V remove(Object key) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public boolean removeAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not implemented yet.");
-    }
+    public Set<Entry<K, V>> entrySet() {
+        return new AbstractSet<Entry<K, V>>() {
+            @Override
+            public Iterator<Entry<K, V>> iterator() {
+                try {
+                    return new BTreeFileStorageIterator();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
 
-    @Override
-    public boolean retainAll(Collection<?> c) {
-        throw new UnsupportedOperationException("Not implemented yet.");
+            @Override
+            public boolean isEmpty() {
+                return BTreeFileStorage.this.isEmpty();
+            }
+
+            @Override
+            public void clear() {
+                BTreeFileStorage.this.clear();
+            }
+
+            @Override
+            public boolean contains(Object k) {
+                return BTreeFileStorage.this.containsKey(k);
+            }
+
+            @Override
+            public int size() {
+                return BTreeFileStorage.this.size();
+            }
+        };
     }
 
     @Override
@@ -188,26 +202,26 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
         this.file.close();
     }
 
-    private BTreeFileEntry<T> getHeadEntry() throws IOException {
-        BTreeFileEntry<T> entry = readRootEntry();
+    private BTreeFileEntry<K, V> getHeadEntry() throws IOException {
+        BTreeFileEntry<K, V> entry = readRootEntry();
         while (!entry.isLeaf()) {
             entry = entry.resolveChild(file, 0);
         }
         return entry;
     }
 
-    private BTreeFileEntry<T> getTailEntry() throws IOException {
-        BTreeFileEntry<T> entry = readRootEntry();
+    private BTreeFileEntry<K, V> getTailEntry() throws IOException {
+        BTreeFileEntry<K, V> entry = readRootEntry();
         while (!entry.isLeaf()) {
             entry = entry.resolveChild(file, entry.size());
         }
         return entry;
     }
 
-    private class BTreeFileStorageIterator implements Iterator<T> {
+    private class BTreeFileStorageIterator implements Iterator<Entry<K, V>> {
 
-        private BTreeFileEntry<T> currentEntry = getHeadEntry();
-        private BTreeFileEntry<T> tailEntry = getTailEntry();
+        private BTreeFileEntry<K, V> currentEntry = getHeadEntry();
+        private BTreeFileEntry<K, V> tailEntry = getTailEntry();
         private Stack<Integer> position;
 
         private BTreeFileStorageIterator() throws IOException {
@@ -224,7 +238,7 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
         }
 
         @Override
-        public T next() {
+        public Entry<K, V> next() {
             try {
                 position.push(position.pop() + 1);
                 while (!currentEntry.isLeaf()) {
@@ -235,7 +249,7 @@ public class BTreeFileStorage<T extends Comparable<T>> implements Collection<T>,
                     position.pop();
                     currentEntry = currentEntry.getParent();
                 }
-                return currentEntry.getValue(position.peek()).get();
+                return currentEntry.getValue(position.peek());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
