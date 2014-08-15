@@ -28,52 +28,52 @@ public class BTreeFileStorageTest {
 
     private BTreeFileEntrySerializer<Long, Void> longVoidSerializer = new BTreeFileEntrySerializer<Long, Void>() {
         @Override
-        public boolean inlineRef() {
+        public boolean inlineEntry() {
             return true;
         }
 
         @Override
-        public void readData(byte[] data, BTreeFileRef<Long, Void> ref) {
-            ref.setKey(ref.getAddress());
+        public void readData(byte[] data, BTreeFileEntry<Long, Void> entry) {
+            entry.setKey(entry.getAddress());
         }
 
         @Override
-        public byte[] writeData(BTreeFileRef<Long, Void> ref) {
+        public byte[] writeData(BTreeFileEntry<Long, Void> entry) {
             return new byte[0];
         }
 
         @Override
-        public void writeNodeData(BTreeFileRef<Long, Void> value, ByteBuffer bb) {
+        public void writeNodeData(BTreeFileEntry<Long, Void> value, ByteBuffer bb) {
             bb.putLong(value == null ? 0 : value.getKey());
         }
 
         @Override
-        public BTreeFileRef<Long, Void> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<Long, Void> serializer, ByteBuffer bb) throws IOException {
+        public BTreeFileEntry<Long, Void> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<Long, Void> serializer, ByteBuffer bb) throws IOException {
             long address = bb.getLong();
-            return address == 0 ? null : BTreeFileRef.forValue(file, serializer, address, null);
+            return address == 0 ? null : BTreeFileEntry.forValue(file, serializer, address, null);
         }
     };
     private BTreeFileEntrySerializer<String, Void> stringVoidSerializer = new BTreeFileEntrySerializer<String, Void>() {
         @Override
-        public boolean inlineRef() {
+        public boolean inlineEntry() {
             return false;
         }
 
         @Override
-        public void readData(byte[] data, BTreeFileRef<String, Void> ref) throws IOException {
+        public void readData(byte[] data, BTreeFileEntry<String, Void> entry) throws IOException {
             ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(data));
             try {
-                ref.setKey((String) is.readObject());
+                entry.setKey((String) is.readObject());
             } catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
         }
 
         @Override
-        public byte[] writeData(BTreeFileRef<String, Void> ref) throws IOException {
+        public byte[] writeData(BTreeFileEntry<String, Void> entry) throws IOException {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(baos);
-            os.writeObject(ref.getKey());
+            os.writeObject(entry.getKey());
             return baos.toByteArray();
         }
     };
@@ -360,7 +360,7 @@ public class BTreeFileStorageTest {
     }
 
     @Test
-    public void testStringReferences() throws IOException {
+    public void testStringKeys() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
         try (BTreeFileStorage<String, Void> storage = BTreeFileStorage.create(file, 2, 1024, stringVoidSerializer)) {

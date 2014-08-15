@@ -12,10 +12,10 @@ class BTreeFileNode<K extends Comparable<K>, V> {
 
     private final BTreeFileNode<K, V> parent;
     private final long address;
-    private final BTreeFileRef<K, V>[] values;
+    private final BTreeFileEntry<K, V>[] values;
     private final long[] children;
 
-    public BTreeFileNode(long address, BTreeFileNode<K, V> parent, BTreeFileRef<K, V>[] values, long[] children) {
+    public BTreeFileNode(long address, BTreeFileNode<K, V> parent, BTreeFileEntry<K, V>[] values, long[] children) {
         assert values.length + 1 == children.length;
         this.parent = parent;
         this.address = address;
@@ -27,7 +27,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         file.seek(address);
         ByteBuffer bb = ByteBuffer.allocate(getBinaryDataSize(values.length));
         bb.putLong(0L); //todo remove
-        for (BTreeFileRef<K, V> value : values) {
+        for (BTreeFileEntry<K, V> value : values) {
             serializer.writeNodeData(value, bb);
         }
         for (long child : children) {
@@ -48,7 +48,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         file.read(buffer);
         ByteBuffer bb = ByteBuffer.wrap(buffer);
         bb.getLong(); // todo remove read "parent"
-        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] values = new BTreeFileRef[order];
+        @SuppressWarnings("unchecked") BTreeFileEntry<K, V>[] values = new BTreeFileEntry[order];
         for (int i = 0; i < values.length; i++) {
             values[i] = serializer.readNodeData(file, serializer, bb);
         }
@@ -59,7 +59,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         return new BTreeFileNode<>(offset, parent, values, children);
     }
 
-    public void add(BTreeFileRef<K, V> t, long rightChild) throws IOException {
+    public void add(BTreeFileEntry<K, V> t, long rightChild) throws IOException {
         int position = findPosition(t.getKey());
         System.arraycopy(values, position, values, position + 1, values.length - position - 1);
         values[position] = t;
@@ -69,13 +69,13 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         }
     }
 
-    public EntrySplitter splitEntry(BTreeFileRef<K, V> newItem, long rightChild) throws IOException {
+    public NodeSplitter splitNode(BTreeFileEntry<K, V> newItem, long rightChild) throws IOException {
         int order = values.length;
         int medianPosition = (order + 1) / 2;
         int pos = findPosition(newItem.getKey());
-        BTreeFileRef<K, V> median;
-        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] left = new BTreeFileRef[order];
-        @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] right = new BTreeFileRef[order];
+        BTreeFileEntry<K, V> median;
+        @SuppressWarnings("unchecked") BTreeFileEntry<K, V>[] left = new BTreeFileEntry[order];
+        @SuppressWarnings("unchecked") BTreeFileEntry<K, V>[] right = new BTreeFileEntry[order];
         long[] childrenLeft = new long[order + 1];
         long[] childrenRight = new long[order + 1];
         if (pos == medianPosition) {
@@ -115,7 +115,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
                 System.arraycopy(children, pos + 1, childrenRight, pos - medianPosition + 1, order - pos);
             }
         }
-        return new EntrySplitter(left, right, childrenLeft, childrenRight, median);
+        return new NodeSplitter(left, right, childrenLeft, childrenRight, median);
     }
 
     public int size() {
@@ -130,7 +130,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
     public int findPosition(K key) throws IOException {
         // todo binary search
         for (int i = 0; i < values.length; i++) {
-            BTreeFileRef<K, V> v = values[i];
+            BTreeFileEntry<K, V> v = values[i];
             if (v == null || v.getKey().compareTo(key) > 0) {
                 return i;
             }
@@ -138,7 +138,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         return values.length;
     }
 
-    public BTreeFileRef<K, V> getValue(int pos) {
+    public BTreeFileEntry<K, V> getValue(int pos) {
         return values[pos];
     }
 
@@ -162,18 +162,18 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         return parent != null ? parent.getDepth() + 1 : 1;
     }
 
-    public class EntrySplitter {
+    public class NodeSplitter {
 
-        private final BTreeFileRef<K, V>[] left;
-        private final BTreeFileRef<K, V>[] right;
+        private final BTreeFileEntry<K, V>[] left;
+        private final BTreeFileEntry<K, V>[] right;
         private final long[] childrenLeft;
         private final long[] childrenRight;
-        private final BTreeFileRef<K, V> median;
+        private final BTreeFileEntry<K, V> median;
 
         private RandomAccessFile file;
 
-        public EntrySplitter(BTreeFileRef<K, V>[] left, BTreeFileRef<K, V>[] right, long[] childrenLeft,
-                             long[] childrenRight, BTreeFileRef<K, V> median) {
+        public NodeSplitter(BTreeFileEntry<K, V>[] left, BTreeFileEntry<K, V>[] right, long[] childrenLeft,
+                            long[] childrenRight, BTreeFileEntry<K, V> median) {
             this.left = left;
             this.right = right;
             this.childrenLeft = childrenLeft;
@@ -181,7 +181,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
             this.median = median;
         }
 
-        public EntrySplitter setOutputFile(RandomAccessFile file) {
+        public NodeSplitter setOutputFile(RandomAccessFile file) {
             if (this.file != null) {
                 throw new IllegalStateException("Output file is already set.");
             }
@@ -189,7 +189,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
             return this;
         }
 
-        public EntrySplitter createLeftEntry(long address, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
+        public NodeSplitter createLeftNode(long address, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
@@ -197,7 +197,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
             return this;
         }
 
-        public EntrySplitter createRightEntry(long address, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
+        public NodeSplitter createRightNode(long address, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
             if (file == null) {
                 throw new IllegalStateException("Output file is not set.");
             }
@@ -205,7 +205,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
             return this;
         }
 
-        public BTreeFileRef<K, V> getMedian() {
+        public BTreeFileEntry<K, V> getMedian() {
             return median;
         }
     }

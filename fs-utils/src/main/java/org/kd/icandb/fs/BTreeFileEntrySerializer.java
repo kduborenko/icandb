@@ -9,18 +9,18 @@ import java.nio.ByteBuffer;
  */
 interface BTreeFileEntrySerializer<K, V> {
 
-    boolean inlineRef();
+    boolean inlineEntry();
 
-    void readData(byte[] data, BTreeFileRef<K, V> ref) throws IOException;
+    void readData(byte[] data, BTreeFileEntry<K, V> entry) throws IOException;
 
-    byte[] writeData(BTreeFileRef<K, V> ref) throws IOException;
+    byte[] writeData(BTreeFileEntry<K, V> entry) throws IOException;
 
-    default void writeNodeData(BTreeFileRef<K, V> value, ByteBuffer bb) {
+    default void writeNodeData(BTreeFileEntry<K, V> value, ByteBuffer bb) {
         bb.putLong(value == null ? 0 : value.getAddress());
     }
 
-    default BTreeFileRef<K,V> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, ByteBuffer bb) throws IOException {
+    default BTreeFileEntry<K,V> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, ByteBuffer bb) throws IOException {
         long address = bb.getLong();
-        return address == 0 ? null : BTreeFileRef.forAddress(file, serializer, address);
+        return address == 0 ? null : BTreeFileEntry.forAddress(file, serializer, address);
     }
 }

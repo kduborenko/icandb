@@ -69,73 +69,73 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
     @Override
     public V put(K key, V value) {
         try {
-            BTreeFileNode<K, V> entry = findLeaf(readRootEntry(), key);
-            BTreeFileRef<K, V> ref = BTreeFileRef.forValue(file, serializer, key, value);
-            storeRef(ref);
-            return addToEntry(ref, entry, 0, 0);
+            BTreeFileNode<K, V> node = findLeaf(readRootNode(), key);
+            BTreeFileEntry<K, V> entry = BTreeFileEntry.forValue(file, serializer, key, value);
+            storeEntry(entry);
+            return addToNode(entry, node, 0, 0);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void storeRef(BTreeFileRef<K, V> ref) throws IOException {
-        if (serializer.inlineRef()) {
+    private void storeEntry(BTreeFileEntry<K, V> entry) throws IOException {
+        if (serializer.inlineEntry()) {
             return;
         }
         Long address = get(BTreeFileHeader.CONTENT_OFFSET);
-        long size = ref.write(address);
+        long size = entry.write(address);
         set(BTreeFileHeader.CONTENT_OFFSET, address + size);
     }
 
-    private BTreeFileNode<K, V> findLeaf(BTreeFileNode<K, V> entry, K key) throws IOException {
-        if (entry == null) {
+    private BTreeFileNode<K, V> findLeaf(BTreeFileNode<K, V> node, K key) throws IOException {
+        if (node == null) {
             return null;
         }
-        if (entry.isLeaf()) {
-            return entry;
+        if (node.isLeaf()) {
+            return node;
         }
-        return findLeaf(entry.resolveChild(file, serializer, entry.findPosition(key)), key);
+        return findLeaf(node.resolveChild(file, serializer, node.findPosition(key)), key);
     }
 
-    private V addToEntry(BTreeFileRef<K, V> t, BTreeFileNode<K, V> entry, long leftChild, long rightChild) throws IOException {
-        if (entry == null) {
-            @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] values = new BTreeFileRef[order];
+    private V addToNode(BTreeFileEntry<K, V> t, BTreeFileNode<K, V> node, long leftChild, long rightChild) throws IOException {
+        if (node == null) {
+            @SuppressWarnings("unchecked") BTreeFileEntry<K, V>[] values = new BTreeFileEntry[order];
             values[0] = t;
             Long newAddress = get(BTreeFileHeader.B_TREE_DATA_SIZE);
             long[] children = new long[order + 1];
             children[0] = leftChild;
             children[1] = rightChild;
-            createEntry(newAddress, values, children);
+            createNode(newAddress, values, children);
             set(BTreeFileHeader.ROOT_ADDRESS, newAddress);
             set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileNode.getBinaryDataSize(order));
             return null;
         } else {
-            if (!entry.isFull()) {
-                entry.add(t, rightChild);
-                entry.write(file, serializer);
+            if (!node.isFull()) {
+                node.add(t, rightChild);
+                node.write(file, serializer);
                 return null; // todo return actual value
             } else {
                 long newAddress = get(BTreeFileHeader.B_TREE_DATA_SIZE);
                 set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileNode.getBinaryDataSize(order));
-                BTreeFileRef<K, V> median = entry.splitEntry(t, rightChild)
+                BTreeFileEntry<K, V> median = node.splitNode(t, rightChild)
                         .setOutputFile(file)
-                        .createLeftEntry(entry.getAddress(), serializer)
-                        .createRightEntry(newAddress, serializer)
+                        .createLeftNode(node.getAddress(), serializer)
+                        .createRightNode(newAddress, serializer)
                         .getMedian();
-                return addToEntry(median, entry.getParent(), entry.getAddress(), newAddress);
+                return addToNode(median, node.getParent(), node.getAddress(), newAddress);
             }
         }
     }
 
-    private BTreeFileNode<K, V> readRootEntry() throws IOException {
+    private BTreeFileNode<K, V> readRootNode() throws IOException {
         long address = get(BTreeFileHeader.ROOT_ADDRESS);
         return address == 0 ? null : BTreeFileNode.read(file, serializer, address, order, null);
     }
 
-    private BTreeFileNode<K, V> createEntry(long offset, BTreeFileRef<K, V>[] values, long[] children) throws IOException {
-        BTreeFileNode<K, V> entry = new BTreeFileNode<>(offset, null, values, children);
-        entry.write(file, serializer);
-        return entry;
+    private BTreeFileNode<K, V> createNode(long offset, BTreeFileEntry<K, V>[] values, long[] children) throws IOException {
+        BTreeFileNode<K, V> node = new BTreeFileNode<>(offset, null, values, children);
+        node.write(file, serializer);
+        return node;
     }
 
     @Override
@@ -197,54 +197,54 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         this.file.close();
     }
 
-    private BTreeFileNode<K, V> getHeadEntry() throws IOException {
-        BTreeFileNode<K, V> entry = readRootEntry();
-        while (!entry.isLeaf()) {
-            entry = entry.resolveChild(file, serializer, 0);
+    private BTreeFileNode<K, V> getHeadNode() throws IOException {
+        BTreeFileNode<K, V> node = readRootNode();
+        while (!node.isLeaf()) {
+            node = node.resolveChild(file, serializer, 0);
         }
-        return entry;
+        return node;
     }
 
-    private BTreeFileNode<K, V> getTailEntry() throws IOException {
-        BTreeFileNode<K, V> entry = readRootEntry();
-        while (!entry.isLeaf()) {
-            entry = entry.resolveChild(file, serializer, entry.size());
+    private BTreeFileNode<K, V> getTailNode() throws IOException {
+        BTreeFileNode<K, V> node = readRootNode();
+        while (!node.isLeaf()) {
+            node = node.resolveChild(file, serializer, node.size());
         }
-        return entry;
+        return node;
     }
 
     private class BTreeFileStorageIterator implements Iterator<Entry<K, V>> {
 
-        private BTreeFileNode<K, V> currentEntry = getHeadEntry();
-        private BTreeFileNode<K, V> tailEntry = getTailEntry();
+        private BTreeFileNode<K, V> currentNode = getHeadNode();
+        private BTreeFileNode<K, V> tailNode = getTailNode();
         private Stack<Integer> position;
 
         private BTreeFileStorageIterator() throws IOException {
             this.position = new Stack<>();
-            IntStream.rangeClosed(1, currentEntry.getDepth() - 1)
+            IntStream.rangeClosed(1, currentNode.getDepth() - 1)
                     .forEach(i -> position.push(0));
             position.push(-1);
         }
 
         @Override
         public boolean hasNext() {
-            return currentEntry.getAddress() != tailEntry.getAddress()
-                    || position.peek() + 1 != currentEntry.size();
+            return currentNode.getAddress() != tailNode.getAddress()
+                    || position.peek() + 1 != currentNode.size();
         }
 
         @Override
         public Entry<K, V> next() {
             try {
                 position.push(position.pop() + 1);
-                while (!currentEntry.isLeaf()) {
-                    currentEntry = currentEntry.resolveChild(file, serializer, position.peek());
+                while (!currentNode.isLeaf()) {
+                    currentNode = currentNode.resolveChild(file, serializer, position.peek());
                     position.push(0);
                 }
-                while (position.peek() == currentEntry.size()) {
+                while (position.peek() == currentNode.size()) {
                     position.pop();
-                    currentEntry = currentEntry.getParent();
+                    currentNode = currentNode.getParent();
                 }
-                return currentEntry.getValue(position.peek());
+                return currentNode.getValue(position.peek());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
