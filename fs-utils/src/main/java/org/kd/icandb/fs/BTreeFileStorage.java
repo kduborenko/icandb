@@ -18,12 +18,16 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
 
     private final int order;
     private final RandomAccessFile file;
+    private final BTreeFileEntrySerializer<K, V> serializer;
 
-    private BTreeFileStorage(File file, int order, long contentOffset) throws IOException {
+    private BTreeFileStorage(File file, int order, long contentOffset,
+                             BTreeFileEntrySerializer<K, V> serializer) throws IOException {
         this.order = order;
         if (!file.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             file.createNewFile();
         }
+        this.serializer = serializer;
         this.file = new RandomAccessFile(file, "rws");
         set(BTreeFileHeader.ROOT_ADDRESS, 0L);
         set(BTreeFileHeader.COLLECTION_SIZE, 0L);
@@ -31,8 +35,9 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         set(BTreeFileHeader.B_TREE_DATA_SIZE, BTreeFileHeader.SIZE);
     }
 
-    public static <K extends Comparable<K>, V> BTreeFileStorage<K, V> create(File file, int order, int contentOffset) throws IOException {
-        return new BTreeFileStorage<>(file, order, contentOffset);
+    public static <K extends Comparable<K>, V> BTreeFileStorage<K, V> create(
+            File file, int order, int contentOffset, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
+        return new BTreeFileStorage<>(file, order, contentOffset, serializer);
     }
 
     private <VT> void set(BTreeFileHeader<VT> header, VT value) {
@@ -61,20 +66,11 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         throw new UnsupportedOperationException("Not implemented yet.");
     }
 
-    /*@Override
-    public Iterator<K, V> iterator() {
-        try {
-            return new BTreeFileStorageIterator();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }*/
-
     @Override
     public V put(K key, V value) {
         try {
-            BTreeFileEntry<K, V> entry = findLeaf(readRootEntry(), key);
-            BTreeFileRef<K, V> ref = BTreeFileRef.forValue(file, key, value);
+            BTreeFileNode<K, V> entry = findLeaf(readRootEntry(), key);
+            BTreeFileRef<K, V> ref = BTreeFileRef.forValue(file, serializer, key, value);
             storeRef(ref);
             return addToEntry(ref, entry, 0, 0);
         } catch (IOException e) {
@@ -83,26 +79,25 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
     }
 
     private void storeRef(BTreeFileRef<K, V> ref) throws IOException {
-        if (ref.getKey() instanceof Long) { //todo implement with serializers
-            ref.setAddress((Long) ref.getKey());
+        if (serializer.inlineRef()) {
             return;
         }
         Long address = get(BTreeFileHeader.CONTENT_OFFSET);
         long size = ref.write(address);
-        set(BTreeFileHeader.CONTENT_OFFSET, address + size + 9);
+        set(BTreeFileHeader.CONTENT_OFFSET, address + size);
     }
 
-    private BTreeFileEntry<K, V> findLeaf(BTreeFileEntry<K, V> entry, K key) throws IOException {
+    private BTreeFileNode<K, V> findLeaf(BTreeFileNode<K, V> entry, K key) throws IOException {
         if (entry == null) {
             return null;
         }
         if (entry.isLeaf()) {
             return entry;
         }
-        return findLeaf(entry.resolveChild(file, entry.findPosition(key)), key);
+        return findLeaf(entry.resolveChild(file, serializer, entry.findPosition(key)), key);
     }
 
-    private V addToEntry(BTreeFileRef<K, V> t, BTreeFileEntry<K, V> entry, long leftChild, long rightChild) throws IOException {
+    private V addToEntry(BTreeFileRef<K, V> t, BTreeFileNode<K, V> entry, long leftChild, long rightChild) throws IOException {
         if (entry == null) {
             @SuppressWarnings("unchecked") BTreeFileRef<K, V>[] values = new BTreeFileRef[order];
             values[0] = t;
@@ -112,34 +107,34 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
             children[1] = rightChild;
             createEntry(newAddress, values, children);
             set(BTreeFileHeader.ROOT_ADDRESS, newAddress);
-            set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileEntry.getBinaryDataSize(order));
+            set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileNode.getBinaryDataSize(order));
             return null;
         } else {
             if (!entry.isFull()) {
                 entry.add(t, rightChild);
-                entry.write(file);
+                entry.write(file, serializer);
                 return null; // todo return actual value
             } else {
                 long newAddress = get(BTreeFileHeader.B_TREE_DATA_SIZE);
-                set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileEntry.getBinaryDataSize(order));
+                set(BTreeFileHeader.B_TREE_DATA_SIZE, newAddress + BTreeFileNode.getBinaryDataSize(order));
                 BTreeFileRef<K, V> median = entry.splitEntry(t, rightChild)
                         .setOutputFile(file)
-                        .createLeftEntry(entry.getAddress())
-                        .createRightEntry(newAddress)
+                        .createLeftEntry(entry.getAddress(), serializer)
+                        .createRightEntry(newAddress, serializer)
                         .getMedian();
                 return addToEntry(median, entry.getParent(), entry.getAddress(), newAddress);
             }
         }
     }
 
-    private BTreeFileEntry<K, V> readRootEntry() throws IOException {
+    private BTreeFileNode<K, V> readRootEntry() throws IOException {
         long address = get(BTreeFileHeader.ROOT_ADDRESS);
-        return address == 0 ? null : BTreeFileEntry.read(file, address, order, null);
+        return address == 0 ? null : BTreeFileNode.read(file, serializer, address, order, null);
     }
 
-    private BTreeFileEntry<K, V> createEntry(long offset, BTreeFileRef<K, V>[] values, long[] children) throws IOException {
-        BTreeFileEntry<K, V> entry = new BTreeFileEntry<>(offset, null, values, children);
-        entry.write(file);
+    private BTreeFileNode<K, V> createEntry(long offset, BTreeFileRef<K, V>[] values, long[] children) throws IOException {
+        BTreeFileNode<K, V> entry = new BTreeFileNode<>(offset, null, values, children);
+        entry.write(file, serializer);
         return entry;
     }
 
@@ -202,26 +197,26 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         this.file.close();
     }
 
-    private BTreeFileEntry<K, V> getHeadEntry() throws IOException {
-        BTreeFileEntry<K, V> entry = readRootEntry();
+    private BTreeFileNode<K, V> getHeadEntry() throws IOException {
+        BTreeFileNode<K, V> entry = readRootEntry();
         while (!entry.isLeaf()) {
-            entry = entry.resolveChild(file, 0);
+            entry = entry.resolveChild(file, serializer, 0);
         }
         return entry;
     }
 
-    private BTreeFileEntry<K, V> getTailEntry() throws IOException {
-        BTreeFileEntry<K, V> entry = readRootEntry();
+    private BTreeFileNode<K, V> getTailEntry() throws IOException {
+        BTreeFileNode<K, V> entry = readRootEntry();
         while (!entry.isLeaf()) {
-            entry = entry.resolveChild(file, entry.size());
+            entry = entry.resolveChild(file, serializer, entry.size());
         }
         return entry;
     }
 
     private class BTreeFileStorageIterator implements Iterator<Entry<K, V>> {
 
-        private BTreeFileEntry<K, V> currentEntry = getHeadEntry();
-        private BTreeFileEntry<K, V> tailEntry = getTailEntry();
+        private BTreeFileNode<K, V> currentEntry = getHeadEntry();
+        private BTreeFileNode<K, V> tailEntry = getTailEntry();
         private Stack<Integer> position;
 
         private BTreeFileStorageIterator() throws IOException {
@@ -242,7 +237,7 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
             try {
                 position.push(position.pop() + 1);
                 while (!currentEntry.isLeaf()) {
-                    currentEntry = currentEntry.resolveChild(file, position.peek());
+                    currentEntry = currentEntry.resolveChild(file, serializer, position.peek());
                     position.push(0);
                 }
                 while (position.peek() == currentEntry.size()) {

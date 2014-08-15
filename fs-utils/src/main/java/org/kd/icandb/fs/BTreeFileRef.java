@@ -1,13 +1,7 @@
 package org.kd.icandb.fs;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
-import java.io.StreamCorruptedException;
 import java.util.Map;
 
 /**
@@ -16,31 +10,45 @@ import java.util.Map;
 class BTreeFileRef<K, V> implements Map.Entry<K, V> {
 
     private final RandomAccessFile file;
+    private final BTreeFileEntrySerializer<K, V> serializer;
     private long address;
     private K key;
     private V value;
 
-    BTreeFileRef(RandomAccessFile file, long address) {
+    BTreeFileRef(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, long address) throws IOException {
         this.file = file;
         this.address = address;
+        this.serializer = serializer;
+        // todo lazy loading
+        if (!serializer.inlineRef()) {
+            file.seek(address);
+            long length = file.readLong();
+            boolean active = file.readBoolean();
+            byte[] data = new byte[(int) length];
+            file.read(data);
+            serializer.readData(data, this);
+        }
     }
 
-    BTreeFileRef(RandomAccessFile file, K key, V value) {
+    BTreeFileRef(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, K key, V value) {
         this.file = file;
         this.key = key;
         this.value = value;
+        this.serializer = serializer;
     }
 
-    public static <K, V> BTreeFileRef<K, V> forAddress(RandomAccessFile file, long address) {
-        return new BTreeFileRef<>(file, address);
+    public static <K, V> BTreeFileRef<K, V> forAddress(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer,
+                                                       long address) throws IOException {
+        return new BTreeFileRef<>(file, serializer, address);
     }
 
-    public static <K, V> BTreeFileRef<K, V> forValue(RandomAccessFile file, K key, V value) {
-        return new BTreeFileRef<>(file, key, value);
+    public static <K, V> BTreeFileRef<K, V> forValue(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer,
+                                                     K key, V value) {
+        return new BTreeFileRef<>(file, serializer, key, value);
     }
 
     public V getValue() {
-        throw new UnsupportedOperationException();
+        return value;
     }
 
     @Override
@@ -49,46 +57,25 @@ class BTreeFileRef<K, V> implements Map.Entry<K, V> {
     }
 
     public K getKey() {
-        if (key == null) {
-            try {
-                file.seek(address);
-                long length = file.readLong();
-                boolean active = file.readBoolean();
-                byte[] data = new byte[(int) length];
-                file.read(data);
-                ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(data));
-                //noinspection unchecked
-                key = (K) is.readObject();
-            } catch (NegativeArraySizeException|StreamCorruptedException|EOFException e) {
-                key = (K) (Long) address; //todo implement with serializers
-            } catch (ClassNotFoundException | IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
         return key;
+    }
+
+    public void setKey(K key) {
+        this.key = key;
     }
 
     public long write(long address) throws IOException {
         this.address = address;
         file.seek(address);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(baos);
-        os.writeObject(key);
-        // todo write value
-        byte[] data = baos.toByteArray();
+        byte[] data = serializer.writeData(this);
         file.writeLong(data.length);
         file.writeBoolean(true);
         file.write(data);
-        return data.length;
+        return data.length + 8 + 1;
     }
 
     public long getAddress() {
         return address;
-    }
-
-    @Deprecated
-    public void setAddress(long address) {
-        this.address = address;
     }
 
     @Override

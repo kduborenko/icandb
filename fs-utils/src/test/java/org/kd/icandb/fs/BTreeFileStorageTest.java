@@ -1,12 +1,16 @@
 package org.kd.icandb.fs;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,15 +19,70 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.LongStream;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class BTreeFileStorageTest {
+
+    private BTreeFileEntrySerializer<Long, Void> longVoidSerializer = new BTreeFileEntrySerializer<Long, Void>() {
+        @Override
+        public boolean inlineRef() {
+            return true;
+        }
+
+        @Override
+        public void readData(byte[] data, BTreeFileRef<Long, Void> ref) {
+            ref.setKey(ref.getAddress());
+        }
+
+        @Override
+        public byte[] writeData(BTreeFileRef<Long, Void> ref) {
+            return new byte[0];
+        }
+
+        @Override
+        public void writeNodeData(BTreeFileRef<Long, Void> value, ByteBuffer bb) {
+            bb.putLong(value == null ? 0 : value.getKey());
+        }
+
+        @Override
+        public BTreeFileRef<Long, Void> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<Long, Void> serializer, ByteBuffer bb) throws IOException {
+            long address = bb.getLong();
+            return address == 0 ? null : BTreeFileRef.forValue(file, serializer, address, null);
+        }
+    };
+    private BTreeFileEntrySerializer<String, Void> stringVoidSerializer = new BTreeFileEntrySerializer<String, Void>() {
+        @Override
+        public boolean inlineRef() {
+            return false;
+        }
+
+        @Override
+        public void readData(byte[] data, BTreeFileRef<String, Void> ref) throws IOException {
+            ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(data));
+            try {
+                ref.setKey((String) is.readObject());
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public byte[] writeData(BTreeFileRef<String, Void> ref) throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream os = new ObjectOutputStream(baos);
+            os.writeObject(ref.getKey());
+            return baos.toByteArray();
+        }
+    };
 
     @Test
     public void testFileCreation() throws IOException {
         File file = File.createTempFile("test", "tmp");
         //noinspection EmptyTryBlock,UnusedDeclaration
-        try (BTreeFileStorage<String, Void> bTreeFileStorage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<String, Void> bTreeFileStorage = BTreeFileStorage.create(file, 4, 1024, stringVoidSerializer)) {
             // do nothing
         }
         InputStream is = new FileInputStream(file);
@@ -43,7 +102,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddOneItem() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(123L, null));
         }
         InputStream is = new FileInputStream(file);
@@ -60,7 +119,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddTwoItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(124L, null));
             assertNull(storage.put(123L, null));
         }
@@ -78,7 +137,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddThreeItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(124L, null));
             assertNull(storage.put(122L, null));
             assertNull(storage.put(123L, null));
@@ -97,7 +156,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast1() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(2L, null));
             assertNull(storage.put(3L, null));
             assertNull(storage.put(4L, null));
@@ -120,7 +179,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast2() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(1L, null));
             assertNull(storage.put(3L, null));
             assertNull(storage.put(4L, null));
@@ -143,7 +202,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast3() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(1L, null));
             assertNull(storage.put(2L, null));
             assertNull(storage.put(4L, null));
@@ -166,7 +225,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast4() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(1L, null));
             assertNull(storage.put(2L, null));
             assertNull(storage.put(3L, null));
@@ -189,7 +248,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddFiveItemsLast5() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             assertNull(storage.put(1L, null));
             assertNull(storage.put(2L, null));
             assertNull(storage.put(3L, null));
@@ -212,7 +271,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder2AddFiveItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024, longVoidSerializer)) {
             assertNull(storage.put(1L, null));
             assertNull(storage.put(2L, null));
             assertNull(storage.put(3L, null));
@@ -236,7 +295,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder2AddSevenItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 2, 1024, longVoidSerializer)) {
             LongStream.rangeClosed(1, 7).forEach(i -> storage.put(i, null));
         }
         InputStream is = new FileInputStream(file);
@@ -259,7 +318,7 @@ public class BTreeFileStorageTest {
     @Test
     public void testOrder4AddSeventeenItems() throws IOException {
         File file = File.createTempFile("test", "tmp");
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
             LongStream.rangeClosed(1, 17).forEach(i -> storage.put(i, null));
         }
         InputStream is = new FileInputStream(file);
@@ -281,12 +340,11 @@ public class BTreeFileStorageTest {
         file.deleteOnExit();
     }
 
-    @Ignore("Turn on after serializers are implemented.")
     @Test
     public void testIterator() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024)) {
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024, longVoidSerializer)) {
             List<Long> elements = LongStream.rangeClosed(1, 500).collect(ArrayList::new,
                     (list, e) -> list.add(0, e),
                     (l1, l2) -> l1.addAll(0, l2));
@@ -305,7 +363,7 @@ public class BTreeFileStorageTest {
     public void testStringReferences() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
-        try (BTreeFileStorage<String, Void> storage = BTreeFileStorage.create(file, 2, 1024)) {
+        try (BTreeFileStorage<String, Void> storage = BTreeFileStorage.create(file, 2, 1024, stringVoidSerializer)) {
             List<String> elements = LongStream.rangeClosed(1, 10)
                     .boxed()
                     .map(String::valueOf)
