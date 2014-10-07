@@ -12,11 +12,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -48,7 +48,9 @@ public class BTreeFileStorageTest {
         }
 
         @Override
-        public BTreeFileEntry<Long, Void> readNodeData(RandomAccessFile file, BTreeFileEntrySerializer<Long, Void> serializer, ByteBuffer bb) throws IOException {
+        public BTreeFileEntry<Long, Void> readNodeData(RandomAccessFile file,
+                                                       BTreeFileEntrySerializer<Long, Void> serializer,
+                                                       ByteBuffer bb) throws IOException {
             long address = bb.getLong();
             return address == 0 ? null : BTreeFileEntry.forValue(file, serializer, address, null);
         }
@@ -345,9 +347,7 @@ public class BTreeFileStorageTest {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
         try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024, longVoidSerializer)) {
-            List<Long> elements = LongStream.rangeClosed(1, 500).collect(ArrayList::new,
-                    (list, e) -> list.add(0, e),
-                    (l1, l2) -> l1.addAll(0, l2));
+            List<Long> elements = LongStream.rangeClosed(1, 500).boxed().collect(Collectors.toList());
             Collections.shuffle(elements);
             elements.forEach(i -> storage.put(i, null));
             Iterator<Long> expected = elements.stream().sorted().iterator();
@@ -367,9 +367,7 @@ public class BTreeFileStorageTest {
             List<String> elements = LongStream.rangeClosed(1, 10)
                     .boxed()
                     .map(String::valueOf)
-                    .collect(ArrayList::new,
-                            (list, e) -> list.add(0, e),
-                            (l1, l2) -> l1.addAll(0, l2));
+                    .collect(Collectors.toList());
             Collections.shuffle(elements);
             elements.forEach(i -> storage.put(i, null));
             Iterator<String> expected = elements.stream().sorted().iterator();

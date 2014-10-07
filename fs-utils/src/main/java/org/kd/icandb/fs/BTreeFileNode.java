@@ -128,14 +128,26 @@ class BTreeFileNode<K extends Comparable<K>, V> {
     }
 
     public int findPosition(K key) throws IOException {
-        // todo binary search
-        for (int i = 0; i < values.length; i++) {
-            BTreeFileEntry<K, V> v = values[i];
-            if (v == null || v.getKey().compareTo(key) > 0) {
-                return i;
+        int left = 0;
+        int right = size() - 1;
+        if (right == -1) {
+            return 0;
+        }
+        if (values[left].getKey().compareTo(key) > 0) {
+            return 0;
+        }
+        if (values[right].getKey().compareTo(key) < 0) {
+            return right + 1;
+        }
+        while (right - left > 1) {
+            int mid = left + (right - left) / 2;
+            if (values[mid].getKey().compareTo(key) < 0) {
+                left = mid;
+            } else {
+                right = mid;
             }
         }
-        return values.length;
+        return right;
     }
 
     public BTreeFileEntry<K, V> getValue(int pos) {
