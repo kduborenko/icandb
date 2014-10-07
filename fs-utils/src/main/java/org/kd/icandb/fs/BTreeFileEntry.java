@@ -53,7 +53,9 @@ class BTreeFileEntry<K, V> implements Map.Entry<K, V> {
 
     @Override
     public V setValue(V value) {
-        throw new UnsupportedOperationException();
+        V oldValue = this.value;
+        this.value = value;
+        return oldValue;
     }
 
     public K getKey() {

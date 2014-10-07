@@ -1,5 +1,6 @@
 package org.kd.icandb.fs;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -21,6 +22,7 @@ import java.util.stream.LongStream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -76,6 +78,32 @@ public class BTreeFileStorageTest {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             ObjectOutputStream os = new ObjectOutputStream(baos);
             os.writeObject(entry.getKey());
+            return baos.toByteArray();
+        }
+    };
+    private BTreeFileEntrySerializer<String, String> stringStringSerializer = new BTreeFileEntrySerializer<String, String>() {
+        @Override
+        public boolean inlineEntry() {
+            return false;
+        }
+
+        @Override
+        public void readData(byte[] data, BTreeFileEntry<String, String> entry) throws IOException {
+            ObjectInputStream is = new ObjectInputStream(new ByteArrayInputStream(data));
+            try {
+                entry.setKey((String) is.readObject());
+                entry.setValue((String) is.readObject());
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public byte[] writeData(BTreeFileEntry<String, String> entry) throws IOException {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ObjectOutputStream os = new ObjectOutputStream(baos);
+            os.writeObject(entry.getKey());
+            os.writeObject(entry.getValue());
             return baos.toByteArray();
         }
     };
@@ -376,6 +404,51 @@ public class BTreeFileStorageTest {
                 assertTrue(actual.hasNext());
                 assertEquals(expected.next(), actual.next());
             }
+        }
+    }
+
+    @Test
+    public void testGetMethod() throws IOException {
+        File file = File.createTempFile("test", "tmp");
+        file.deleteOnExit();
+        try (BTreeFileStorage<String, String> storage = BTreeFileStorage.create(file, 2, 1024, stringStringSerializer)) {
+            List<String> elements = LongStream.rangeClosed(1, 10)
+                    .boxed()
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            elements.forEach(i -> storage.put(i, "v:" + i));
+            assertEquals("v:5", storage.get("5"));
+            assertEquals("v:4", storage.get("4"));
+            assertNull(storage.get("15"));
+        }
+    }
+
+    @Test
+    public void testContainsKeyMethod() throws IOException {
+        File file = File.createTempFile("test", "tmp");
+        file.deleteOnExit();
+        try (BTreeFileStorage<String, Void> storage = BTreeFileStorage.create(file, 2, 1024, stringVoidSerializer)) {
+            List<String> elements = LongStream.rangeClosed(1, 10)
+                    .boxed()
+                    .map(String::valueOf)
+                    .collect(Collectors.toList());
+            elements.forEach(i -> storage.put(i, null));
+            assertTrue(storage.containsKey("5"));
+            assertTrue(storage.containsKey("4"));
+            assertFalse(storage.containsKey("15"));
+        }
+    }
+
+    @Test @Ignore
+    public void testRemoves() throws IOException {
+        File file = File.createTempFile("test", "tmp");
+        file.deleteOnExit();
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024, longVoidSerializer)) {
+            List<Long> elements = LongStream.rangeClosed(1, 500).boxed().collect(Collectors.toList());
+            Collections.shuffle(elements);
+            elements.forEach(i -> storage.put(i, null));
+            elements.forEach(i -> storage.remove(i, null));
+            assertFalse(storage.keySet().iterator().hasNext());
         }
     }
 

@@ -140,12 +140,33 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
 
     @Override
     public boolean containsKey(Object key) {
-        throw new UnsupportedOperationException();
+        BTreeFileEntry<K, V> entry = findEntry((K) key);
+        return entry != null;
     }
 
     @Override
     public V get(Object key) {
-        throw new UnsupportedOperationException();
+        BTreeFileEntry<K, V> entry = findEntry((K) key);
+        return entry != null ? entry.getValue() : null;
+    }
+
+    public BTreeFileEntry<K, V> findEntry(K key) {
+        try {
+            BTreeFileNode<K, V> node = readRootNode();
+            while (node != null) {
+                int position = node.findPosition(key);
+                if (position != node.size()) {
+                    BTreeFileEntry<K, V> entry = node.getValue(position);
+                    if (entry.getKey().equals(key)) {
+                        return entry;
+                    }
+                }
+                node = node.isLeaf() ? null : node.resolveChild(file, serializer, position);
+            }
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
