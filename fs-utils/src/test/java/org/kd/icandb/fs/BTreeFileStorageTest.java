@@ -439,15 +439,32 @@ public class BTreeFileStorageTest {
         }
     }
 
-    @Test @Ignore
-    public void testRemoves() throws IOException {
+    @Test
+    public void testPrimitiveRemove() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
         try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024, longVoidSerializer)) {
-            List<Long> elements = LongStream.rangeClosed(1, 500).boxed().collect(Collectors.toList());
+            List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
             Collections.shuffle(elements);
             elements.forEach(i -> storage.put(i, null));
+            assertEquals(10, storage.size());
             elements.forEach(i -> storage.remove(i, null));
+            assertEquals(0, storage.size());
+            assertFalse(storage.keySet().iterator().hasNext());
+        }
+    }
+
+    @Ignore @Test
+    public void test2LevelRemove() throws IOException {
+        File file = File.createTempFile("test", "tmp");
+        file.deleteOnExit();
+        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
+            List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
+            Collections.shuffle(elements);
+            elements.forEach(i -> storage.put(i, null));
+            assertEquals(10, storage.size());
+            elements.forEach(i -> storage.remove(i, null));
+            assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
         }
     }

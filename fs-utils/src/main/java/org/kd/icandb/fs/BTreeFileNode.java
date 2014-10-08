@@ -8,7 +8,7 @@ import java.util.Arrays;
 /**
  * @author Kiryl Dubarenka
  */
-class BTreeFileNode<K extends Comparable<K>, V> {
+class BTreeFileNode<K, V> {
 
     private final BTreeFileNode<K, V> parent;
     private final long address;
@@ -21,6 +21,9 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         this.address = address;
         this.values = values;
         this.children = children;
+        for (int i = 0; i < values.length && values[i] != null; i++) {
+            values[i].attachToNode(this, i);
+        }
     }
 
     public void write(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
@@ -40,7 +43,7 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         return 8 * (2 * order + 1) + 8;
     }
 
-    public static <K extends Comparable<K>, V> BTreeFileNode<K, V> read(
+    public static <K, V> BTreeFileNode<K, V> read(
             RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, long offset,
             int order, BTreeFileNode<K, V> parent) throws IOException {
         file.seek(offset);
@@ -63,6 +66,10 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         int position = findPosition(t.getKey());
         System.arraycopy(values, position, values, position + 1, values.length - position - 1);
         values[position] = t;
+        t.attachToNode(this, position);
+        for (int i = position; i < values.length && values[i] != null; i++) {
+            values[i].attachToNode(this, i);
+        }
         if (!isLeaf()) {
             System.arraycopy(children, position + 1, children, position + 2, children.length - position - 2);
             children[position + 1] = rightChild;
@@ -133,15 +140,15 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         if (right == -1) {
             return 0;
         }
-        if (values[left].getKey().compareTo(key) > 0) {
+        if (compare(values[left].getKey(), key) >= 0) {
             return 0;
         }
-        if (values[right].getKey().compareTo(key) < 0) {
+        if (compare(values[right].getKey(), key) < 0) {
             return right + 1;
         }
         while (right - left > 1) {
             int mid = left + (right - left) / 2;
-            if (values[mid].getKey().compareTo(key) < 0) {
+            if (compare(values[mid].getKey(), key) < 0) {
                 left = mid;
             } else {
                 right = mid;
@@ -149,6 +156,17 @@ class BTreeFileNode<K extends Comparable<K>, V> {
         }
         return right;
     }
+
+    private int compare(K k1, K k2) {
+        if (k1 instanceof Comparable) {
+            //noinspection unchecked
+            return ((Comparable<K>) k1).compareTo(k2);
+        } else {
+            // todo add support of external comparator
+            throw new UnsupportedOperationException();
+        }
+    }
+
 
     public BTreeFileEntry<K, V> getValue(int pos) {
         return values[pos];
@@ -172,6 +190,11 @@ class BTreeFileNode<K extends Comparable<K>, V> {
 
     public int getDepth() {
         return parent != null ? parent.getDepth() + 1 : 1;
+    }
+
+    public void remove(int position) {
+        System.arraycopy(values, position + 1, values, position, values.length - position - 1);
+        values[values.length - 1] = null;
     }
 
     public class NodeSplitter {

@@ -14,7 +14,7 @@ import java.util.stream.IntStream;
 /**
  * @author Kiryl Dubarenka
  */
-public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K, V> implements Closeable {
+public class BTreeFileStorage<K, V> extends AbstractMap<K, V> implements Closeable {
 
     private final int order;
     private final RandomAccessFile file;
@@ -35,7 +35,7 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
         set(BTreeFileHeader.B_TREE_DATA_SIZE, BTreeFileHeader.SIZE);
     }
 
-    public static <K extends Comparable<K>, V> BTreeFileStorage<K, V> create(
+    public static <K, V> BTreeFileStorage<K, V> create(
             File file, int order, int contentOffset, BTreeFileEntrySerializer<K, V> serializer) throws IOException {
         return new BTreeFileStorage<>(file, order, contentOffset, serializer);
     }
@@ -58,7 +58,12 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
 
     @Override
     public int size() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        // todo optimize
+        int count = 0;
+        for (Entry<K, V> e : entrySet()) {
+            count++;
+        }
+        return count;
     }
 
     @Override
@@ -171,7 +176,17 @@ public class BTreeFileStorage<K extends Comparable<K>, V> extends AbstractMap<K,
 
     @Override
     public V remove(Object key) {
-        throw new UnsupportedOperationException();
+        BTreeFileEntry<K, V> entry = findEntry((K) key);
+        if (entry == null) {
+            return null;
+        }
+        entry.getNode().remove(entry.getPosition());
+        try {
+            entry.getNode().write(file, serializer);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return entry.getValue();
     }
 
     @Override

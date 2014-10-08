@@ -14,6 +14,8 @@ class BTreeFileEntry<K, V> implements Map.Entry<K, V> {
     private long address;
     private K key;
     private V value;
+    private BTreeFileNode<K, V> node;
+    private int position;
 
     BTreeFileEntry(RandomAccessFile file, BTreeFileEntrySerializer<K, V> serializer, long address) throws IOException {
         this.file = file;
@@ -99,4 +101,18 @@ class BTreeFileEntry<K, V> implements Map.Entry<K, V> {
         result = 31 * result + (value != null ? value.hashCode() : 0);
         return result;
     }
+
+    public void attachToNode(BTreeFileNode<K, V> node, int position) {
+        this.node = node;
+        this.position = position;
+    }
+
+    public BTreeFileNode<K, V> getNode() {
+        return node;
+    }
+
+    public int getPosition() {
+        return position;
+    }
+
 }
