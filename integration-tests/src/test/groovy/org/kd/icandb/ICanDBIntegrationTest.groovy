@@ -2,14 +2,15 @@ package org.kd.icandb
 
 import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
-import org.junit.After
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import org.kd.icandb.services.ICanDBService
 import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
-import static org.junit.Assert.assertEquals
+import static org.junit.jupiter.api.Assertions.assertEquals
+import static org.junit.jupiter.api.Assertions.expectThrows
 
 /**
  * @author Kiryl Dubarenka
@@ -19,19 +20,19 @@ class ICanDBIntegrationTest {
     private static final def context = new AnnotationConfigApplicationContext("org.kd.icandb");
     private static ICanDB driver;
 
-    @BeforeClass
+    @BeforeAll
     public static void setUp() {
         context.getBean(ICanDBService).start()
         driver = ICanDBDriver.getDriver("net://localhost:8978/")
     }
 
-    @AfterClass
+    @AfterAll
     public static void tearDown() {
         context.getBean(ICanDBService).stop()
         driver == null  // todo close driver
     }
 
-    @After
+    @AfterEach
     public void clean() {
         context.getBean(ICanDB).removeAll()
     }
@@ -61,17 +62,19 @@ class ICanDBIntegrationTest {
         ]
     }
 
-    @Test(expected = ICanDBException)
+    @Test
     public void insertUsingExistingID() {
         def id = driver.insert 'users', [
             name: 'Name1',
             age: 26
         ]
-        driver.insert 'users', [
-            _id: id,
-            name: 'Name2',
-            age: 27
-        ]
+        expectThrows(ICanDBException) {
+            driver.insert 'users', [
+                    _id: id,
+                    name: 'Name2',
+                    age: 27
+            ]
+        }
     }
 
     @Test

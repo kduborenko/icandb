@@ -1,13 +1,13 @@
 package org.kd.icandb;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Kiryl Dubarenka
@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 public class ICanDBDriverTest {
 
     @Test
-    @SuppressWarnings("AssertEqualsBetweenInconvertibleTypes")
     public void testEmbeddedDriver() throws ICanDBException {
         ICanDB driver = ICanDBDriver.getDriver("mem://");
         Map<String, Object> obj = new HashMap<>();
@@ -25,7 +24,7 @@ public class ICanDBDriverTest {
 
         Map<String, Object> res = new HashMap<>(obj);
         res.put("_id", id);
-        assertEquals(Arrays.asList(res), users);
+        assertEquals(Collections.singletonList(res), users);
     }
 
 }

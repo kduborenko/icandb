@@ -1,7 +1,7 @@
 package org.kd.icandb.fs;
 
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -20,11 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class BTreeFileStorageTest {
 
@@ -454,7 +450,7 @@ public class BTreeFileStorageTest {
         }
     }
 
-    @Ignore @Test
+    @Disabled @Test
     public void test2LevelRemove() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();

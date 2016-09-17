@@ -6,9 +6,12 @@ subprojects {
     }
 
     dependencies {
-        testCompile group: 'junit',
-                name: 'junit',
-                version: '4.11'
+        testCompile group: 'org.junit.jupiter',
+                name: 'junit-jupiter-api',
+                version: '5.0.0-M2'
+        testRuntime group: 'org.junit.jupiter',
+                name: 'junit-jupiter-engine',
+                version: '5.0.0-M2'
     }
 
     version = '0.1-SNAPSHOT'
