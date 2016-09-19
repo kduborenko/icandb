@@ -14,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
@@ -461,21 +462,28 @@ public class BTreeFileStorageTest {
 
     @TestFactory
     public Stream<DynamicTest> test2LevelRemoveFactory() throws IOException {
+        List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
         return IntStream.range(0, 10)
                 .boxed()
-                .map((i) -> DynamicTest.dynamicTest("Attempt #" + i, this::test2LevelRemove));
+                .map((i) -> {
+                    Collections.shuffle(elements);
+                    List<Long> add = new ArrayList<>(elements);
+                    Collections.shuffle(elements);
+                    List<Long> remove = new ArrayList<>(elements);
+                    return DynamicTest.dynamicTest(
+                            String.format("Add: %s, Remove: %s", add, remove),
+                            () -> test2LevelRemove(add, remove)
+                    );
+                });
     }
 
-    public void test2LevelRemove() throws IOException {
+    public void test2LevelRemove(List<Long> add, List<Long> remove) throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
         try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
-            List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
-            Collections.shuffle(elements);
-            elements.forEach(i -> storage.put(i, null));
+            add.forEach(i -> storage.put(i, null));
             assertEquals(10, storage.size());
-            Collections.shuffle(elements);
-            elements.forEach(i -> storage.remove(i, null));
+            remove.forEach(i -> storage.remove(i, null));
             assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
         }
