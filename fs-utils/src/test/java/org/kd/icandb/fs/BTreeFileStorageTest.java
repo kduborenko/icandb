@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -444,24 +446,8 @@ public class BTreeFileStorageTest {
         }
     }
 
-    @Test
-    public void testPrimitiveRemove() throws IOException {
-        File file = File.createTempFile("test", "tmp");
-        file.deleteOnExit();
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 10, 1024, longVoidSerializer)) {
-            List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
-            Collections.shuffle(elements);
-            elements.forEach(i -> storage.put(i, null));
-            assertEquals(10, storage.size());
-            elements.forEach(i -> storage.remove(i, null));
-            assertEquals(0, storage.size());
-            assertFalse(storage.keySet().iterator().hasNext());
-        }
-    }
-
-
     @TestFactory
-    public Stream<DynamicTest> test2LevelRemoveFactory() throws IOException {
+    public Stream<DynamicTest> testPrimitiveRemove() throws IOException {
         List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
         return IntStream.range(0, 10)
                 .boxed()
@@ -472,21 +458,50 @@ public class BTreeFileStorageTest {
                     List<Long> remove = new ArrayList<>(elements);
                     return DynamicTest.dynamicTest(
                             String.format("Add: %s, Remove: %s", add, remove),
-                            () -> test2LevelRemove(add, remove)
+                            () -> testAddRemove(
+                                    (file) -> BTreeFileStorage.create(file, 10, 1024, longVoidSerializer),
+                                    add, remove)
                     );
                 });
     }
 
-    public void test2LevelRemove(List<Long> add, List<Long> remove) throws IOException {
+
+    @TestFactory
+    public Stream<DynamicTest> test2LevelRemove() throws IOException {
+        List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
+        return IntStream.range(0, 10)
+                .boxed()
+                .map((i) -> {
+                    Collections.shuffle(elements);
+                    List<Long> add = new ArrayList<>(elements);
+                    Collections.shuffle(elements);
+                    List<Long> remove = new ArrayList<>(elements);
+                    return DynamicTest.dynamicTest(
+                            String.format("Add: %s, Remove: %s", add, remove),
+                            () -> testAddRemove(
+                                    (file) -> BTreeFileStorage.create(file, 4, 1024, longVoidSerializer),
+                                    add, remove)
+                    );
+                });
+    }
+
+    private void testAddRemove(
+            StorageFactory<Long, Void> storageFactory,
+            List<Long> add,
+            List<Long> remove) throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
-        try (BTreeFileStorage<Long, Void> storage = BTreeFileStorage.create(file, 4, 1024, longVoidSerializer)) {
+        try (BTreeFileStorage<Long, Void> storage = storageFactory.create(file)) {
             add.forEach(i -> storage.put(i, null));
             assertEquals(10, storage.size());
             remove.forEach(i -> storage.remove(i, null));
             assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
         }
+    }
+
+    interface StorageFactory<K, V> {
+        BTreeFileStorage<K, V> create(File file) throws IOException;
     }
 
 }
