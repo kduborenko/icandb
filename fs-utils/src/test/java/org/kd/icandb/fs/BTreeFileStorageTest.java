@@ -1,7 +1,8 @@
 package org.kd.icandb.fs;
 
-import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,9 +19,16 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class BTreeFileStorageTest {
 
@@ -450,7 +458,14 @@ public class BTreeFileStorageTest {
         }
     }
 
-    @Disabled @Test
+
+    @TestFactory
+    public Stream<DynamicTest> test2LevelRemoveFactory() throws IOException {
+        return IntStream.range(0, 10)
+                .boxed()
+                .map((i) -> DynamicTest.dynamicTest("Attempt #" + i, this::test2LevelRemove));
+    }
+
     public void test2LevelRemove() throws IOException {
         File file = File.createTempFile("test", "tmp");
         file.deleteOnExit();
@@ -459,6 +474,7 @@ public class BTreeFileStorageTest {
             Collections.shuffle(elements);
             elements.forEach(i -> storage.put(i, null));
             assertEquals(10, storage.size());
+            Collections.shuffle(elements);
             elements.forEach(i -> storage.remove(i, null));
             assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
