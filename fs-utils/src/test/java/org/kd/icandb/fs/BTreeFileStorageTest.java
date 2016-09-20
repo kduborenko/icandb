@@ -19,8 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -31,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class BTreeFileStorageTest {
 
@@ -465,10 +462,28 @@ public class BTreeFileStorageTest {
                 });
     }
 
-
     @TestFactory
     public Stream<DynamicTest> test2LevelRemove() throws IOException {
         List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
+        return IntStream.range(0, 10)
+                .boxed()
+                .map((i) -> {
+                    Collections.shuffle(elements);
+                    List<Long> add = new ArrayList<>(elements);
+                    Collections.shuffle(elements);
+                    List<Long> remove = new ArrayList<>(elements);
+                    return DynamicTest.dynamicTest(
+                            String.format("Add: %s, Remove: %s", add, remove),
+                            () -> testAddRemove(
+                                    (file) -> BTreeFileStorage.create(file, 4, 1024, longVoidSerializer),
+                                    add, remove)
+                    );
+                });
+    }
+
+    @TestFactory
+    public Stream<DynamicTest> test3LevelRemove() throws IOException {
+        List<Long> elements = LongStream.rangeClosed(1, 22).boxed().collect(Collectors.toList());
         return IntStream.range(0, 10)
                 .boxed()
                 .map((i) -> {
@@ -493,7 +508,7 @@ public class BTreeFileStorageTest {
         file.deleteOnExit();
         try (BTreeFileStorage<Long, Void> storage = storageFactory.create(file)) {
             add.forEach(i -> storage.put(i, null));
-            assertEquals(10, storage.size());
+            assertEquals(add.size(), storage.size());
             remove.forEach(i -> storage.remove(i, null));
             assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
