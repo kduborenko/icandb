@@ -1,5 +1,6 @@
 package org.kd.icandb.fs;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -462,6 +463,7 @@ public class BTreeFileStorageTest {
                 });
     }
 
+    @Disabled
     @TestFactory
     public Stream<DynamicTest> test2LevelRemove() throws IOException {
         List<Long> elements = LongStream.rangeClosed(1, 10).boxed().collect(Collectors.toList());
@@ -481,6 +483,7 @@ public class BTreeFileStorageTest {
                 });
     }
 
+    @Disabled
     @TestFactory
     public Stream<DynamicTest> test3LevelRemove() throws IOException {
         List<Long> elements = LongStream.rangeClosed(1, 22).boxed().collect(Collectors.toList());
@@ -509,7 +512,11 @@ public class BTreeFileStorageTest {
         try (BTreeFileStorage<Long, Void> storage = storageFactory.create(file)) {
             add.forEach(i -> storage.put(i, null));
             assertEquals(add.size(), storage.size());
-            remove.forEach(i -> storage.remove(i, null));
+            long removedCount = remove.stream()
+                    .map(i -> storage.remove(i, null))
+                    .filter(b -> b)
+                    .count();
+            assertEquals(remove.size(), removedCount);
             assertEquals(0, storage.size());
             assertFalse(storage.keySet().iterator().hasNext());
         }
